@@ -1,0 +1,7 @@
+
+error_reporting:    0                                 # Set PHP error reporting level.
+
+model.config:       'build/conf/freshdiet-conf.php'   # Location of the Propel config file
+
+http.mode:          'production'                      # {production|staging|development}
+http.log:           '/var/log/slim'                   # Directory in which to create log files.
