@@ -11,6 +11,7 @@ class HTTP {
 
   public  $err;
   private $requestBodyParser;
+  private $apps;
 
   //===========================================================================//
   // SETUP SLIM & HTTP WRAPPER                                                 //
@@ -21,6 +22,7 @@ class HTTP {
     require 'classes/Wigwam/vendor/Slim/Slim.php';
 
     $xthis      = $this;
+    $this->apps = array();
 
     // Load configuration from yaml file. Settings present in config.local.yaml
     // will overwrite settings specified in config.yaml.
@@ -278,7 +280,7 @@ class HTTP {
     });
 
     $rfl->addTagHandler('role', new Auth($app));
-    $rfl->run();
+    $this->apps[$rfl->getName()] = $rfl->run();
   }
 
   // Unset session data and destroy session cookie.
@@ -359,6 +361,13 @@ class HTTP {
   }
 
   public function run($routes=null) {
+    $xthis  = $this;
+    $apps   = $this->apps;
+
+    $this->get('/api', function() use ($xthis, $apps) {
+      $xthis->render($apps);
+    });
+
     try {
       if (! is_null($routes))
         $this->routes($routes);

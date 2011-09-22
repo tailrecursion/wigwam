@@ -31,18 +31,12 @@ class Reflect {
   }
 
   public function run() {
-    $this->getApi();
+    return $this->getApi();
   }
 
   public function getApi() {
     $app    = new ReflectionClass($this->name);
-    $ref    = new ReflectionClass($this);
     $xthis  = $this;
-
-    $methods= array_merge(
-      array($ref->getMethod('getApi')),
-      $app->getMethods(ReflectionMethod::IS_STATIC)
-    );
 
     return $this->api ? $this->api : $this->api = array(
       'name'      => $app->getName(),
@@ -57,7 +51,7 @@ class Reflect {
             );
           }, $method->getParameters())
         ));
-      }, $methods))
+      }, $app->getMethods(ReflectionMethod::IS_STATIC)))
     );
   }
 
