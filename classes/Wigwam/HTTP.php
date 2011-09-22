@@ -360,12 +360,21 @@ class HTTP {
     }
   }
 
+  public function makeJSRuntime($api) {
+    Slim::response()->header('Content-Type', 'text/javascript');
+    include('classes/Wigwam/jsruntime.php');
+  }
+
   public function run($routes=null) {
     $xthis  = $this;
     $apps   = $this->apps;
 
     $this->get('/api', function() use ($xthis, $apps) {
       $xthis->render($apps);
+    });
+
+    $this->get('/wigwam.js', function() use ($xthis, $apps) {
+      $xthis->makeJSRuntime($apps);
     });
 
     try {
