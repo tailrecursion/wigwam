@@ -10,6 +10,6 @@ Quick Start
   2. Create a `.htaccess` file (see `htaccess.example` for some pointers).
   3. Make some test requests:
 
-      GET /apis
-      GET /Wigwam/Test/App/getDoit
+        GET /apis
+        GET /Wigwam/Test/App/getDoit
 
