@@ -2,6 +2,31 @@
 
 class ArrayUtils {
 
+  /**
+   * Performs a topological sort on a directed acyclic graph.
+   *
+   * @param $dag array The DAG.
+   * @return array The sorted nodes.
+   */
+  public static function tsort($dag) {
+    $l = array();
+    $s = function(&$dag) {
+      foreach ($dag as $k => $v)
+        if (! count($v)) {
+          unset($dag[$k]);
+          return $k;
+        }
+      return null;
+    };
+    while ($n = $s($dag)) {
+      array_unshift($l, $n);
+      foreach ($dag as $k => &$v)
+        if (false !== ($i = array_search($n, $v)))
+          array_splice($v, $i, 1);
+    }
+    return $l;
+  }
+
  /**
   * Merge two arrays recursively, overwriting original keys.
   * 

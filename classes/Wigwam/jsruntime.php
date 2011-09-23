@@ -1,32 +1,66 @@
 <?php
 
+use Wigwam\Utils\ArrayUtils;
+
 function getExceptionDefs() {
-  $ret = array();
-  $dir = dirname(__FILE__);
-  if ($handle = opendir($dir)) {
-    while (false !== ($file = readdir($handle)))
-      if (is_file("$dir/$file") && !preg_match('/^\\./', $file)
-          && $file !== basename(__FILE__)) {
-        $cls = 'Wigwam\\'.preg_replace('/\\.php$/','',$file);
-        if (class_exists($cls, false) || class_exists($cls)) {
-          $r = new ReflectionClass($cls);
-          if ($r->isSubclassOf('Wigwam\\Exception')) {
-            $p      = $r->getParentClass()->name;
-            $lhs    = preg_replace('/\\\\/', '.', $cls);
-            $rhs    = preg_replace('/\\\\/', '.', $p);
-            $ret[]  = sprintf("  %-23s = makeErrClass(%s);", $lhs, $rhs);
-          }
+  $ret    = array();
+  $dir    = dirname(__FILE__);
+  $files  = array('Wigwam.Exception' => 'Error');
+
+  $dag = array_reduce(scandir($dir), function($dag, $file) use ($dir, &$files) {
+    if (is_file("$dir/$file") && !preg_match('/^\\./', $file)
+      && $file !== basename(__FILE__)) {
+      $cls = 'Wigwam\\'.preg_replace('/\\.php$/','',$file);
+      if (class_exists($cls, false) || class_exists($cls)) {
+        $r = new ReflectionClass($cls);
+        if ($r->isSubclassOf('Wigwam\\Exception')) {
+          $p      = $r->getParentClass()->name;
+          $lhs    = preg_replace('/\\\\/', '.', $cls);
+          $rhs    = preg_replace('/\\\\/', '.', $p);
+
+          if (!array_key_exists($rhs, $dag))
+            $dag[$rhs] = array($lhs);
+          else
+            $dag[$rhs][] = $lhs;
+
+          if (!array_key_exists($lhs, $dag))
+            $dag[$lhs] = array();
+
+          $files[$lhs] = $rhs;
         }
       }
-    closedir($handle);
-  }
-  return $ret;
+    }
+    return $dag;
+  }, array('Error' => array('Wigwam.Exception')));
+
+  return join("\n", array_filter(array_map(function($x) use ($files) {
+    if (array_key_exists($x, $files))
+      return sprintf("  %-22s = makeErrClass(%s);", $x, $files[$x]);
+  }, ArrayUtils::tsort($dag))));
 }
 
+include('classes/Wigwam/vendor/js/json2.js');
 ?>
+
+/**
+ * Wigwam web framework runtime JS.
+ *
+ * Fork me on github: https://github.com/micha/wigwam
+ */
 (function() {
 
-  var api = <?php echo str_replace('\\/', '/', json_encode($api)) ?>;
+  var api   = <?php echo str_replace('\\/', '/', json_encode($api)) ?>;
+  var base  = "<?php echo dirname($_SERVER['REQUEST_URI']) ?>";
+
+  function nestedObj(a, b, c) {
+    var x = c,
+        k = a.pop();
+    $.each(a, function(i,v) {
+      if (!x[v]) x[v] = {};
+      x = x[v];
+    });
+    x[k] = b;
+  };
 
   function getConf() {
     var ret={},query,i,pair;
@@ -41,6 +75,9 @@ function getExceptionDefs() {
       pair = query[i].split('=');
       ret[decodeURIComponent(pair.shift())] =decodeURIComponent(pair.pop());
     });
+
+    ret.base = base;
+    ret.argv = getArgv();
 
     return ret;
   }
@@ -59,15 +96,59 @@ function getExceptionDefs() {
     return q;
   }
 
+  function makeApi(api) {
+    $.each(api, function(i, app) {
+      var base = app.name.split('\\');
+      $.each(app.methods, function(i, method) {
+        var doAsync, doSync;
+
+        doAsync = function() {
+          var argv=Array.prototype.slice.call(arguments), 
+              data={}, ret;
+
+          $.each(method.params, function(i,v) {
+            data[v.name] = argv[i];
+          });
+
+          return function(success, error, sync) {
+            return Wigwam.ajax(
+              method.verb,
+              method.route,
+              data,
+              success,
+              error,
+              !sync
+            );
+          };
+        };
+
+        doSync = function() {
+          var argv=Array.prototype.slice.call(arguments), 
+              ret, ex;
+
+          doAsync.apply(window, argv)(
+            function(data) { ret = data },
+            function(err) { ex = err },
+            true
+          );
+
+          if (ex) throw ex;
+          return ret;
+        };
+
+        nestedObj(base.concat([method.name]), doAsync, window);
+        nestedObj(base.concat([method.name]), doSync, window.Wigwam.sync);
+      });
+    });
+  }
+
   function makeErrClass(proto) {
     var F = function(data) { $.extend(this, data) }
     F.prototype = new proto();
     return F;
   }
 
-  var Wigwam = {
-    App: {},
-
+  window.Wigwam = {
     data: {},
 
     csrfToken: 0,
@@ -87,7 +168,7 @@ function getExceptionDefs() {
         type:         method,
         processData:  process,
         dataType:     'json',
-        url:          Wigwam.cfg.base+'/json'+url,
+        url:          Wigwam.cfg.base+url,
         data:         data,
         accepts: {
           json: 'application/json'
@@ -143,49 +224,13 @@ function getExceptionDefs() {
       return proc(success, error);
     },
 
-    sync: {Wigwam: {App: {}}}
+    sync: {}
 
   };
 
-  Wigwam.cfg.argv        = getArgv();
+<?php echo getExceptionDefs()."\n"; ?>
+  Wigwam.Util            = {};
 
-  Wigwam.Exception        = makeErrClass(Error);
-<?php
-  echo join("\n", getExceptionDefs())."\n";
-?>
-
-  Wigwam.Util = {};
-
-  if (api) {
-    $.each(api.methods, function(i,v) {
-      Wigwam.App[v.name] = function() {
-        var argv=Array.prototype.slice.call(arguments), 
-            data={}, ret;
-
-        $.each(v.params, function(i,v) {
-          data[v.name] = argv[i];
-        });
-
-        return function(success, error, sync) {
-          return Wigwam.ajax(v.verb, v.route, data, success, error, !sync);
-        };
-      };
-      Wigwam.sync.Wigwam.App[v.name] = function() {
-        var argv=Array.prototype.slice.call(arguments), 
-            ret, ex;
-
-        Wigwam.App[v.name].apply(window, argv)(
-          function(data) { ret = data },
-          function(err) { ex = err },
-          true
-        );
-
-        if (ex) throw ex;
-        return ret;
-      };
-    });
-  }
-
-  window.Wigwam = Wigwam;
+  makeApi(api);
 
 })();

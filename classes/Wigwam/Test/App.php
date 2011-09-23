@@ -27,9 +27,24 @@ class App {
    * and authentication system.
    *
    * @role deny
+   *
+   * @return array What it did.
    */
   public static function getDoit() {
     return array('did' => 'it');
   }
 
+  /**
+   * This method will throw an exception that can be caught in JS.
+   *
+   * @param foo number The foo.
+   * @param bar number The bar.
+   * @return number The sum of the foo and the bar.
+   * @throws \Wigwam\NotAllowed
+   */
+  public static function getOops($foo, $bar) {
+    if ($foo > 100)
+      throw new \Wigwam\NotAllowed("too much foo", array('bar' => 'baz'));
+    return $foo + $bar;
+  }
 }
