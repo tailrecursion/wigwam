@@ -8,35 +8,44 @@
  * 
  *---------------------------------------------------------------------------
  *  
- * ROOT/
+ * APPROOT/
+ *   |
+ *   +-- WIGWAM_DIR/
+ *   |     |
+ *   |     +-- classes/
+ *   |     |     |
+ *   |     |     +-- Wigwam/
+ *   |     |           |
+ *   |     |           +-- vendor/
+ *   |     |           |     |
+ *   |     |           |     +-- Slim/
+ *   |     |           |           |
+ *   |     |           |           +-- Slim.php
+ *   |     |           |
+ *   |     |           |
+ *   |     |           +-- ClassLoader.php
+ *   |     |           |
+ *   |     |           +-- Exception.php
+ *   |     |           |
+ *   |     |           +-- NotAllowed.php
+ *   |     |           |
+ *   |     |           +-- ...
+ *   |     |      
+ *   |     +-- index.php
  *   |
  *   +-- classes/
- *   |     |
- *   |     +-- Wigwam/
- *   |     |     |
- *   |     |     +-- vendor/
- *   |     |     |     |
- *   |     |     |     +-- Slim/
- *   |     |     |           |
- *   |     |     |           +-- Slim.php
- *   |     |     |
- *   |     |     |
- *   |     |     +-- ClassLoader.php
- *   |     |
- *   |     +-- Foo/
- *   |           |
- *   |           +-- Bar/
- *   |                 |
- *   |                 +-- MyClass.php
- *   +-- index.php
+ *         |
+ *         +-- Test/
+ *               |
+ *               +-- Thinger.php
  *      
  *---------------------------------------------------------------------------
  *
- * MyClass.php:
+ * Thinger.php:
  *
- * <?php namespace Foo\Bar;
+ * <?php namespace Test;
  * 
- *   class MyClass {
+ *   class Thinger {
  *     ...
  *   }
  *
@@ -51,11 +60,15 @@
  *   // Load the classloader itself (do this first).
  *   require_once('classes/Wigwam/ClassLoader.php');
  *
- *   // Instantiate the classloader instance.
- *   new Wigwam\ClassLoader();
+ *   // Add the application's classes dir to the classpath.
+ *   Wigwam\ClassLoader::$paths[] = realpath('../classes');
  *
  *   // Autoload a class.
- *   $obj = new Foo\Bar\MyClass();
+ *   $obj = new Test\Thinger();
+ *
+ *   // Autoload a wigwam class.
+ *   if ($auth == false)
+ *     throw new Wigwam\NotAllowed("you can't do that!");
  *
  *   // Autoload a class from a vendor (used internally in Wigwam).
  *   Slim::init();
@@ -66,6 +79,10 @@
 
 class ClassLoader {
 
+  // Expects array of absolute paths to directories where
+  // class files can be found.
+  public static $paths = array();
+
   public function __construct() {
     spl_autoload_register(array($this, 'loadWigwamClass'));
   }
@@ -74,13 +91,23 @@ class ClassLoader {
     $root       = dirname(__FILE__);
     $relpath    = str_replace('\\', '/', $class).'.php';
 
-    $app_path   = "$root/../$relpath";
+    $wig_path   = "$root/../$relpath";
     $vend_glob  = glob("$root/vendor/*/$relpath");
 
-    if (file_exists($app_path))
-      require $app_path;
+    foreach (static::$paths as $path)
+      if (file_exists("$path/$relpath")) {
+        require "$path/$relpath";
+        return;
+      }
+
+    if (file_exists($wig_path))
+      require $wig_path;
     elseif (count($vend_glob))
       require $vend_glob[0];
+  }
+
+  public static function addPath($path) {
+    static::$paths[] = $path;
   }
 
 }
