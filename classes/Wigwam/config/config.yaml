@@ -1,0 +1,3 @@
+error_reporting:    0                                 # Set PHP error reporting level.
+http.mode:          'production'                      # {production|staging|development}
+http.log:           '/var/log/wigwam'                 # Directory in which to create log files.

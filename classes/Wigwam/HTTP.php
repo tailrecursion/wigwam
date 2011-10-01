@@ -12,20 +12,25 @@ class HTTP {
   public  $err;
   private $requestBodyParser;
   private $apps;
+  private $classesDir;
 
   //===========================================================================//
   // SETUP SLIM & HTTP WRAPPER                                                 //
   //===========================================================================//
 
-  public function __construct($config_files) {
+  public function __construct($config_files=array()) {
 
-    require 'classes/Wigwam/vendor/Slim/Slim.php';
+    $this->classesDir = dirname(__FILE__)."/..";
+
+    require $this->classesDir.'/Wigwam/vendor/Slim/Slim.php';
 
     $xthis      = $this;
     $this->apps = array();
 
     // Load configuration from yaml file. Settings present in config.local.yaml
     // will overwrite settings specified in config.yaml.
+
+    array_unshift($config_files, $this->classesDir.'/Wigwam/config/config.yaml');
 
     $config = array_reduce(
       $config_files,
@@ -154,7 +159,7 @@ class HTTP {
     // Initialize the Slim application framework.
 
     Slim::init(array(
-      'templates.path'    => './classes/Wigwam/vendor/templates',
+      'templates.path'    => $this->classesDir.'/Wigwam/vendor/templates',
       'view'              => $theView,
       'mode'              => $config['http.mode'],
       'log.path'          => $config['http.log'],
@@ -362,7 +367,7 @@ class HTTP {
 
   public function makeJSRuntime($api) {
     Slim::response()->header('Content-Type', 'text/javascript');
-    include('classes/Wigwam/jsruntime.php');
+    include($this->classesDir.'/Wigwam/jsruntime.php');
   }
 
   public function run($routes=null) {
