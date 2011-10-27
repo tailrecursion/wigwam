@@ -35,7 +35,9 @@ class HTTP {
     $config = array_reduce(
       $config_files,
       function($acc, $e) {
-        return ArrayUtils::merge_recursive_overwrite($acc, yaml_parse_file($e));
+        return is_readable($e)
+          ? ArrayUtils::merge_recursive_overwrite($acc, yaml_parse_file($e))
+          : $acc;
       },
       array()
     );
