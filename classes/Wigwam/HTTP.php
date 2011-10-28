@@ -5,6 +5,7 @@ use Wigwam\Reflect;
 use Wigwam\HTTP\Auth;
 use Wigwam\HTTP\View\ByAcceptHeader;
 use Wigwam\HTTP\RequestBody\ByContentType;
+use Wigwam\HTTP\Session\Noop;
 use Wigwam\Utils\ArrayUtils;
 
 class HTTP {
@@ -18,7 +19,7 @@ class HTTP {
   // SETUP SLIM & HTTP WRAPPER                                                 //
   //===========================================================================//
 
-  public function __construct($config_files=array()) {
+  public function __construct($config=array()) {
 
     $this->classesDir = dirname(__FILE__)."/..";
 
@@ -27,20 +28,13 @@ class HTTP {
     $xthis      = $this;
     $this->apps = array();
 
-    // Load configuration from yaml file. Settings present in config.local.yaml
-    // will overwrite settings specified in config.yaml.
+    // Load config from YAML if $config is an array of filenames (we know this
+    // when $config is not an associative array of key/value pairs.
 
-    array_unshift($config_files, $this->classesDir.'/Wigwam/config/config.yaml');
-
-    $config = array_reduce(
-      $config_files,
-      function($acc, $e) {
-        return is_readable($e)
-          ? ArrayUtils::merge_recursive_overwrite($acc, yaml_parse_file($e))
-          : $acc;
-      },
-      array()
-    );
+    if (! ArrayUtils::isAssoc($config)) {
+      array_unshift($config, $this->classesDir.'/Wigwam/config/config.yaml');
+      $config = HTTP::yamlConfig($config);
+    }
 
     // Set error reporting.
 
@@ -160,12 +154,14 @@ class HTTP {
 
     // Initialize the Slim application framework.
 
+    $sessionHlr = $config['http.session'];
+
     Slim::init(array(
       'templates.path'    => $this->classesDir.'/Wigwam/vendor/templates',
       'view'              => $theView,
       'mode'              => $config['http.mode'],
       'log.path'          => $config['http.log'],
-      'session.handler'   => new HTTP\Session\Noop(),
+      'session.handler'   => $sessionHlr ? $sessionHlr : new Noop(),
     ));
 
     // HTTP error handler.
@@ -259,6 +255,21 @@ class HTTP {
       ));
     }
 
+  }
+
+  // Parse some YAML files, overwriting values with values in later files
+  // when keys overlap.
+
+  public static function yamlConfig($config_files) {
+    return array_reduce(
+      $config_files,
+      function($acc, $e) {
+        return is_readable($e)
+          ? ArrayUtils::merge_recursive_overwrite($acc, yaml_parse_file($e))
+          : $acc;
+      },
+      array()
+    );
   }
 
   // Create routes for applicable public static methods of $app.
