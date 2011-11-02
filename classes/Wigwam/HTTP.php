@@ -154,14 +154,12 @@ class HTTP {
 
     // Initialize the Slim application framework.
 
-    $sessionHlr = $config['http.session'];
-
     Slim::init(array(
       'templates.path'    => $this->classesDir.'/Wigwam/vendor/templates',
       'view'              => $theView,
       'mode'              => $config['http.mode'],
       'log.path'          => $config['http.log'],
-      'session.handler'   => $sessionHlr ? $sessionHlr : new Noop(),
+      'session.handler'   => new Noop(),
     ));
 
     // HTTP error handler.
