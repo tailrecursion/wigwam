@@ -1,4 +1,3 @@
-#!/usr/bin/env php
 <?php
 // vim: ft=php
 
@@ -11,6 +10,16 @@ if (! class_exists('Wigwam\\ClassLoader'))
 ClassLoader::addExactPath(__DIR__.'/../../Wigwam');
 
 Console::setup();
+
+Console::$option = getopt('f:q');
+
+if (isset(Console::$option['f'])) {
+  if (is_array(Console::$option['f']))
+    foreach (Console::$option['f'] as Console::$tmp)
+      require_once(Console::$tmp);
+  else
+    require_once(Console::$option['f']);
+}
 
 echo "\nConsole ready. Press ctrl-d to reload, ctrl-c to quit.\n\n";
 

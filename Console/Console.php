@@ -8,6 +8,11 @@ class Console {
   public static $PS2    = '  *> ';
   public static $DEBUG  = false;
 
+  public static $getopt = "f:q";
+  public static $option = array();
+
+  public static $quiet  = false;
+
   public static $sock   = array();
   public static $reboot = false;
   public static $pid1;
