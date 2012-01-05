@@ -81,14 +81,15 @@ class ClassLoader {
 
   // Expects array of absolute paths to directories where
   // class files can be found.
-  public static $paths = array();
+  public static $paths        = array();
+  public static $exact_paths  = array();
 
   public function __construct() {
     spl_autoload_register(array($this, 'loadWigwamClass'));
   }
 
   private function loadWigwamClass($class) {
-    $root       = dirname(__FILE__);
+    $root       = __DIR__;
     $relpath    = str_replace('\\', '/', $class).'.php';
 
     $wig_path   = "$root/../$relpath";
@@ -100,6 +101,13 @@ class ClassLoader {
         return;
       }
 
+    if (count($p = array_filter(explode('/', $relpath))))
+      foreach (static::$exact_paths as $path)
+        if (basename($path)==$p[0] && file_exists(dirname($path)."/$relpath")) {
+          require dirname($path)."/$relpath";
+          return;
+        }
+
     if (file_exists($wig_path))
       require $wig_path;
     elseif (count($vend_glob))
@@ -107,7 +115,13 @@ class ClassLoader {
   }
 
   public static function addPath($path) {
-    static::$paths[] = $path;
+    if (! in_array($path, static::$paths))
+      static::$paths[] = $path;
+  }
+
+  public static function addExactPath($path) {
+    if (! in_array($path, static::$exact_paths))
+      static::$exact_paths[] = $path;
   }
 
 }

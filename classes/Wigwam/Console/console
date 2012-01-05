@@ -1,0 +1,57 @@
+<?php
+
+use Wigwam\ClassLoader;
+use Wigwam\Console\Console;
+
+if (! class_exists('Wigwam\\ClassLoader'))
+  require_once(__DIR__.'/../ClassLoader.php');
+
+ClassLoader::addExactPath(__DIR__.'/../../Wigwam');
+
+Console::setup();
+
+echo "\nConsole ready. Press ctrl-c to quit.\n\n";
+
+Console::fork(Console::$pid1);
+
+if (Console::$pid1 > 0) {
+  // parent
+  while(true) {
+    Console::readLine();
+    Console::endCompletions();
+    Console::getStatus();
+  }
+  pcntl_waitpid(Console::$pid1, Console::$status);
+} else {
+  // child
+  while(true) {
+    Console::fork(Console::$pid2);
+
+    if (Console::$pid2 > 0) {
+      // child
+      pcntl_waitpid(Console::$pid2, Console::$status);
+      Console::sendStatus("ok");
+    } else {
+      // grandchild
+      Console::$pid3 = posix_getpid();
+
+      Console::serviceCompletionRequests();
+
+      pcntl_signal(SIGCHLD, SIG_IGN);
+
+      if (eval(Console::getLine()) === false)
+        Console::printFatal(error_get_last());
+
+      if (posix_getpid() != Console::$pid3) {
+        // great-grandchild: could be here if eval'ed code called fork(), for
+        // instance.
+        exit(0);
+      }
+
+      Console::sendStatus("ok");
+
+      posix_kill(posix_getppid(), SIGTERM);
+      pcntl_signal_dispatch();
+    }
+  }
+}
