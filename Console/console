@@ -35,6 +35,7 @@ if (Console::$pid1 > 0) {
       break;
   }
   pcntl_waitpid(Console::$pid1, Console::$status);
+  echo "\n";
   pcntl_exec(array_shift($argv), $argv);
 } else {
   // child
