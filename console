@@ -1,0 +1,5 @@
+#!/usr/bin/env php
+<?php
+// vim: ft=php
+
+require_once(__DIR__."/Console/console");
