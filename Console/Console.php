@@ -9,6 +9,7 @@ class Console {
   public static $DEBUG  = false;
 
   public static $sock   = array();
+  public static $reboot = false;
   public static $pid1;
   public static $pid2;
   public static $pid3;
@@ -224,12 +225,21 @@ class Console {
 
   public static function doReadline($prompt) {
     $line = readline($prompt);
+
+    if ($line === false)
+      static::$reboot = true;
+
     if (strlen($line)) {
       readline_add_history($line);
       readline_write_history(static::getHistFile());
     } else
       $line = ' ';
     return $line;
+  }
+
+  public static function stopWorkers() {
+    static::writeSock(0, 0, ":done:");
+    static::writeSock(1, 0, ":done:");
   }
 
   public static function readLine() {

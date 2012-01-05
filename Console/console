@@ -1,4 +1,6 @@
+#!/usr/bin/env php
 <?php
+// vim: ft=php
 
 use Wigwam\ClassLoader;
 use Wigwam\Console\Console;
@@ -10,7 +12,7 @@ ClassLoader::addExactPath(__DIR__.'/../../Wigwam');
 
 Console::setup();
 
-echo "\nConsole ready. Press ctrl-c to quit.\n\n";
+echo "\nConsole ready. Press ctrl-d to reload, ctrl-c to quit.\n\n";
 
 Console::fork(Console::$pid1);
 
@@ -20,12 +22,18 @@ if (Console::$pid1 > 0) {
     Console::readLine();
     Console::endCompletions();
     Console::getStatus();
+    if (Console::$reboot)
+      break;
   }
   pcntl_waitpid(Console::$pid1, Console::$status);
+  pcntl_exec(array_shift($argv), $argv);
 } else {
   // child
   while(true) {
-    Console::fork(Console::$pid2);
+    if (! Console::$reboot)
+      Console::fork(Console::$pid2);
+    else
+      exit();
 
     if (Console::$pid2 > 0) {
       // child
