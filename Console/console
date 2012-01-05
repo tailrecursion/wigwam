@@ -9,8 +9,6 @@ if (! class_exists('Wigwam\\ClassLoader'))
 
 ClassLoader::addExactPath(__DIR__.'/../../Wigwam');
 
-Console::setup();
-
 Console::$option = getopt('f:q');
 
 if (isset(Console::$option['f'])) {
@@ -20,6 +18,8 @@ if (isset(Console::$option['f'])) {
   else
     require_once(Console::$option['f']);
 }
+
+Console::setup();
 
 echo "\nConsole ready. Press ctrl-d to reload, ctrl-c to quit.\n\n";
 
