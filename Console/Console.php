@@ -11,7 +11,8 @@ class Console {
   public static $getopt = "f:q";
   public static $option = array();
 
-  public static $quiet  = false;
+  public static $print      = true;
+  public static $printnext  = true;
 
   public static $sock   = array();
   public static $reboot = false;
@@ -253,9 +254,14 @@ class Console {
 
   public static function getLine() {
     $line = preg_replace('/;$/', '', static::readSock(0, 1));
-    if ($line && static::printableLine($line))
+    $line = ConsoleCommand::doit($line);
+
+    if ($line && static::$printnext && static::printableLine($line))
       $line = 'printf("=> %s\n", Wigwam\Console\Console::getReflectionString('.$line.'))';
     $line .= ';';
+
+    static::$printnext = static::$print;
+
     return $line;
   }
 

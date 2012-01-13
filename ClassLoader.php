@@ -1,5 +1,11 @@
 <?php namespace Wigwam;
 
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use RegexIterator;
+use RecursiveRegexIterator;
+use FilesystemIterator;
+
 /**
  *
  * Autoload classes in the classes directory, using the namespace/subdir
@@ -85,6 +91,82 @@ class ClassLoader {
   public static $exact_paths        = array();
   public static $exact_path_aliases = array();
 
+  /*************************************************************************** 
+   *** PRIVATE METHODS                                                     *** 
+   ***************************************************************************/
+
+  /**
+   * Convenience method that returns an array containing the names of all sub-
+   * directories of a given directory. Only one level of subdirectories is
+   * traversed, and results are given as subdirectory name, not as a full path.
+   *
+   * @return array The list of subdirectories.
+   */
+  private static function listSubDirs($dir) {
+    $ret = array();
+
+    if ($dh = opendir($dir))
+      while ( ($d = readdir($dh)) !== false)
+        if (is_dir("$dir/$d") && ! preg_match('/^\\.\\.?$/', $d))
+          array_push($ret, $d);
+
+    return $ret;
+  }
+
+  /**
+   * Convenience method that returns an array of all classes that can be loaded
+   * from the given directory $dir, applying the given prefix $prefix to the
+   * resulting list items as a prepended namespace. Subdirectories given in the
+   * $prune array are not traversed (must be given as the directory name (not
+   * the full path) of directories to prune which are direct children of $dir).
+   *
+   * @param string $dir The root directory to search.
+   * @param string $prefix The namespace to prepend to each class name in the
+   * result.
+   * @param array $prune The list of subdirectories which are not to be tra-
+   * versed when searching for class def files.
+   * @return array The list of fully-qualified class names.
+   */
+  private static function listClassesInDir($dir, $prefix='', $prune=array()) {
+    $ret = array();
+    $d   = new RecursiveDirectoryIterator($dir);
+    $i   = new RecursiveIteratorIterator($d);
+    $r   = new RegexIterator($i, '/^[^.].*\\.php$/',
+              RecursiveRegexIterator::GET_MATCH);
+
+    foreach($r as $path) {
+      $p = $path[0];
+      foreach ($prune as $pr)
+        if (preg_match('/^'.preg_quote("$dir/$pr/", '/').'/', $p))
+          continue 2;
+      array_push($ret, $p);
+    }
+
+    return array_map(function($x) use ($dir, $prefix) {
+      $x = preg_replace('/^'.preg_quote("$dir/", '/').'/', "$prefix/", $x);
+      $x = preg_replace('/\\//', '\\', $x);
+      $x = preg_replace('/^\\\\/', '', $x);
+      $x = preg_replace('/\\.php$/', '', $x);
+      return $x;
+    }, $ret);
+  }
+
+  /**
+   * Requires the class definition file for the given fully-qualified class
+   * name, if possible.
+   *
+   * @param string $class The fully-qualified class name.
+   * @return null
+   */
+  private function loadWigwamClass($class) {
+    if ( ($f = static::findClassDefFile($class)) )
+      require_once($f);
+  }
+
+  /*************************************************************************** 
+   *** PUBLIC METHODS                                                      *** 
+   ***************************************************************************/
+
   /**
    * Constructor registers the autoload handler.
    */
@@ -93,7 +175,7 @@ class ClassLoader {
   }
 
   /**
-   * Find the class definition file for the given class and require_once() it.
+   * Find the class definition file for the given fully-qualified class name.
    *
    * Searches the file system five ways:
    *   
@@ -117,9 +199,9 @@ class ClassLoader {
    *    the relative path of the file when testing for a match.
    *
    * @param string $class The fully-qualified class name.
-   * @return null
+   * @return string The class definition file.
    */
-  private function loadWigwamClass($class) {
+  public static function findClassDefFile($class) {
     $root     = __DIR__;
     $relpath  = str_replace('\\', '/', $class).'.php';
     $ns       = strstr($relpath, '/', true);
@@ -130,31 +212,106 @@ class ClassLoader {
 
     if ($ns == "Wigwam") {
       if (file_exists( ($f = "$root".substr($relpath, strlen("Wigwam"))) ))
-        require_once($f);
+        return $f;
       elseif (count( ($vend_glob = glob("$root/vendor/*/$relpath")) ))
-        require_once($vend_glob[0]);
+        return $vend_glob[0];
       return;
     }
 
     foreach (static::$paths as $path)
-      if (file_exists("$path/$relpath")) {
-        require_once("$path/$relpath");
-        return;
-      }
+      if (file_exists("$path/$relpath"))
+        return "$path/$relpath";
 
     foreach (static::$exact_paths as $path)
-      if (basename($path)==$ns && file_exists(dirname($path)."/$relpath")) {
-        require_once(dirname($path)."/$relpath");
-        return;
-      }
+      if (basename($path)==$ns && file_exists(dirname($path)."/$relpath"))
+        return dirname($path)."/$relpath";
 
     foreach (static::$exact_path_aliases as $alias => $path)
       if (! strncmp($relpath, "$alias/", strlen("$alias/"))
-        && file_exists( ($f = "$path".substr($relpath, strlen($alias))) )) {
-        require_once($f);
-        return;
-      }
+        && file_exists( ($f = "$path".substr($relpath, strlen($alias))) ))
+        return $f;
 
+  }
+
+  /**
+   * Returns array containing the fully-qualified names of all classes that can
+   * be loaded by the classloader. Result is sorted.
+   *
+   * @return array The list of fully-qualified class names.
+   */
+  public static function listKnownClasses() {
+    $r = array_merge(
+      static::listWigwamClasses(),
+      static::listPathClasses(),
+      static::listExactPathClasses(),
+      static::listExactPathAliasClasses()
+    );
+    sort($r);
+    return $r;
+  }
+
+  /**
+   * Returns array containing the fully-qualified names of all classes included
+   * in the Wigwam package. Third-party vendor classes are not returned, as they
+   * should be considered 'private' to the Wigwam package and not accessed dir-
+   * ectly by client code.
+   *
+   * @return array The list of fully-qualified class names.
+   */
+  public static function listWigwamClasses() {
+    return static::listClassesInDir(__DIR__, 'Wigwam', array('vendor'));
+  }
+
+  /**
+   * Returns array containing the fully-qualified names of all classes loadable
+   * from the paths added via addPath().
+   *
+   * @return array The list of fully-qualified class names.
+   */
+  public static function listPathClasses() {
+    return array_reduce(static::$paths, function($xs, $x) {
+      $xs = array_merge($xs, ClassLoader::listClassesInDir($x));
+      return $xs;
+    }, array());
+  }
+
+  /**
+   * Returns array containing the fully-qualified names of all classes loadable
+   * from the paths added via addExactPath().
+   *
+   * @return array The list of fully-qualified class names.
+   */
+  public static function listExactPathClasses() {
+    return array_reduce(static::$exact_paths, function($xs, $x) {
+      $dn = dirname($x);
+      $bn = basename($x);
+      $prune = array_diff(ClassLoader::listSubDirs($dn), array($bn));
+      $xs = array_merge($xs, array_map(function($x) use ($bn) {
+        return "$bn\\$x";
+      }, ClassLoader::listClassesInDir($x, $prune)));
+      return $xs;
+    }, array());
+  }
+
+  /**
+   * Returns array containing the fully-qualified names of all classes loadable
+   * from the paths added via addExactPathAlias().
+   *
+   * @return array The list of fully-qualified class names.
+   */
+  public static function listExactPathAliasClasses() {
+    $ret = array();
+
+    foreach (static::$exact_path_aliases as $a => $p) {
+      $dn     = dirname($p);
+      $bn     = basename($p);
+      $prune  = array_diff(ClassLoader::listSubDirs($dn), array($bn));
+      $ret    = array_merge($ret, array_map(function($x) use ($a) {
+                  return "$a\\$x";
+                }, ClassLoader::listClassesInDir($p, $prune)));
+    }
+
+    return $ret;
   }
 
   /**
@@ -165,6 +322,7 @@ class ClassLoader {
    * @return null
    */
   public static function addPath($path) {
+    $path = preg_replace('/\\/$/', '', $path);
     if (! in_array($path, static::$paths))
       static::$paths[] = $path;
   }
@@ -201,6 +359,7 @@ class ClassLoader {
    * @return null
    */
   public static function addExactPath($path) {
+    $path = preg_replace('/\\/$/', '', $path);
     if (! in_array($path, static::$exact_paths))
       static::$exact_paths[] = $path;
   }
@@ -239,6 +398,7 @@ class ClassLoader {
    * @return null
    */
   public static function addExactPathAlias($path, $alias) {
+    $path = preg_replace('/\\/$/', '', $path);
     if (! array_key_exists($alias, static::$exact_path_aliases))
       static::$exact_path_aliases[$alias] = $path;
   }

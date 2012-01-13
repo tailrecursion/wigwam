@@ -1,13 +1,15 @@
 <?php
 // vim: ft=php
 
+ini_set('error_log', '');
+
 use Wigwam\ClassLoader;
 use Wigwam\Console\Console;
 
 if (! class_exists('Wigwam\\ClassLoader'))
   require_once(__DIR__.'/../ClassLoader.php');
 
-Console::$option = getopt('f:q');
+Console::$option = getopt('f:hqz');
 
 if (isset(Console::$option['f'])) {
   if (is_array(Console::$option['f']))
@@ -16,6 +18,12 @@ if (isset(Console::$option['f'])) {
   else
     require_once(Console::$option['f']);
 }
+
+if (isset(Console::$option['z']))
+  exit();
+
+if (isset(Console::$option['q']))
+  Console::$print = Console::$printnext = false;
 
 Console::setup();
 
