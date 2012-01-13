@@ -7,8 +7,6 @@ use Wigwam\Console\Console;
 if (! class_exists('Wigwam\\ClassLoader'))
   require_once(__DIR__.'/../ClassLoader.php');
 
-ClassLoader::addExactPath(__DIR__.'/../../Wigwam');
-
 Console::$option = getopt('f:q');
 
 if (isset(Console::$option['f'])) {
