@@ -5,11 +5,17 @@ ini_set('error_log', '');
 
 use Wigwam\ClassLoader;
 use Wigwam\Console\Console;
+use Wigwam\Console\ConsoleCommand;
 
 if (! class_exists('Wigwam\\ClassLoader'))
   require_once(__DIR__.'/../ClassLoader.php');
 
 Console::$option = getopt('f:hqz');
+
+if (isset(Console::$option['h'])) {
+  ConsoleCommand::h('');
+  exit();
+}
 
 if (isset(Console::$option['f'])) {
   if (is_array(Console::$option['f']))
@@ -27,7 +33,7 @@ if (isset(Console::$option['q']))
 
 Console::setup();
 
-echo "\nConsole ready. Press ctrl-d to reload, ctrl-c to quit.\n\n";
+echo "\nConsole ready. Press ctrl-d to reload, ctrl-c to quit, /h for help.\n\n";
 
 Console::fork(Console::$pid1);
 

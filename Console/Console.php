@@ -96,9 +96,15 @@ class Console {
       $orig   = $buf;
       $info   = readline_info();
       $buf    = substr($info['line_buffer'], 0 , $info['point']);
+
+//      error_log("\norig='$orig'");
+
+      // Prevent empty completion request from being sent, as it would cause
+      // the socket to block forever waiting for the response.
+      if (! $buf) return;
+
       $match  = Console::getCompletionResp(Console::sendCompletionReq($buf));
 
-      //error_log(var_export($match, true));
       if (is_array($match) && count($match)) {
         sort($match);
         return $match;

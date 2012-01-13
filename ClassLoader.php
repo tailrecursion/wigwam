@@ -114,41 +114,26 @@ class ClassLoader {
   }
 
   /**
-   * Convenience method that returns an array of all classes that can be loaded
-   * from the given directory $dir, applying the given prefix $prefix to the
-   * resulting list items as a prepended namespace. Subdirectories given in the
-   * $prune array are not traversed (must be given as the directory name (not
-   * the full path) of directories to prune which are direct children of $dir).
+   * Returns array containing all known namespaces which are children of the
+   * given $prefix namespace. If the $class argument is given (and true) then
+   * the names of classes in the $prefix namespace will be returned, instead.
    *
-   * @param string $dir The root directory to search.
-   * @param string $prefix The namespace to prepend to each class name in the
-   * result.
-   * @param array $prune The list of subdirectories which are not to be tra-
-   * versed when searching for class def files.
-   * @return array The list of fully-qualified class names.
+   * @param string $prefix The namespace to search. Use '' for global ns.
+   * @param boolean $class Whether to return classes or namespaces.
+   * @return array The list of namespaces and classes (as applicable).
    */
-  private static function listClassesInDir($dir, $prefix='', $prune=array()) {
-    $ret = array();
-    $d   = new RecursiveDirectoryIterator($dir);
-    $i   = new RecursiveIteratorIterator($d);
-    $r   = new RegexIterator($i, '/^[^.].*\\.php$/',
-              RecursiveRegexIterator::GET_MATCH);
+  private static function listSubnamespaces($prefix='', $class=false) {
+    $p = $prefix ? trim($prefix, '\\').'\\' : $prefix;
+    $c = static::listKnownClasses();
 
-    foreach($r as $path) {
-      $p = $path[0];
-      foreach ($prune as $pr)
-        if (preg_match('/^'.preg_quote("$dir/$pr/", '/').'/', $p))
-          continue 2;
-      array_push($ret, $p);
-    }
-
-    return array_map(function($x) use ($dir, $prefix) {
-      $x = preg_replace('/^'.preg_quote("$dir/", '/').'/', "$prefix/", $x);
-      $x = preg_replace('/\\//', '\\', $x);
-      $x = preg_replace('/^\\\\/', '', $x);
-      $x = preg_replace('/\\.php$/', '', $x);
-      return $x;
-    }, $ret);
+    return array_reduce($c, function($xs, $x) use ($p, $class) {
+      $a = explode('\\', substr($x, strlen($p)));
+      if (preg_match('/^'.preg_quote($p, '/').'/', $x) 
+        && ((!$class && count($a) > 1) || ($class && count($a) == 1))
+        && !in_array($a[0], $xs))
+        array_push($xs, $a[0]);
+      return $xs;
+    }, array());
   }
 
   /**
@@ -235,19 +220,79 @@ class ClassLoader {
 
   /**
    * Returns array containing the fully-qualified names of all classes that can
-   * be loaded by the classloader. Result is sorted.
+   * be loaded by the classloader.
    *
    * @return array The list of fully-qualified class names.
    */
   public static function listKnownClasses() {
-    $r = array_merge(
+    return array_unique(array_merge(
+      static::listDeclaredClasses(),
+      static::listLoadableClasses()
+    ));
+  }
+
+  /**
+   * Return array containing the fully-qualified names of all classes that can
+   * be autoloaded by this classloader.
+   *
+   * @return array The list of fully-qualified class names.
+   */
+  public static function listLoadableClasses() {
+    return array_unique(array_merge(
       static::listWigwamClasses(),
       static::listPathClasses(),
       static::listExactPathClasses(),
       static::listExactPathAliasClasses()
-    );
-    sort($r);
-    return $r;
+    ));
+  }
+
+  /**
+   * Convenience method that returns an array of all classes that can be loaded
+   * from the given directory $dir, applying the given prefix $prefix to the
+   * resulting list items as a prepended namespace. Subdirectories given in the
+   * $prune array are not traversed (must be given as the directory name (not
+   * the full path) of directories to prune which are direct children of $dir).
+   *
+   * @param string $dir The root directory to search.
+   * @param string $prefix The namespace to prepend to each class name in the
+   * result.
+   * @param array $prune The list of subdirectories which are not to be tra-
+   * versed when searching for class def files.
+   * @return array The list of fully-qualified class names.
+   */
+  public static function listClassesInDir($dir, $prefix='', $prune=array()) {
+    $ret = array();
+    $d   = new RecursiveDirectoryIterator($dir);
+    $i   = new RecursiveIteratorIterator($d);
+    $r   = new RegexIterator($i, '/^[^.].*\\.php$/',
+              RecursiveRegexIterator::GET_MATCH);
+
+    foreach($r as $path) {
+      $p = $path[0];
+      foreach ($prune as $pr)
+        if (preg_match('/^'.preg_quote("$dir/$pr/", '/').'/', $p))
+          continue 2;
+      array_push($ret, $p);
+    }
+
+    return array_map(function($x) use ($dir, $prefix) {
+      $x = preg_replace('/^'.preg_quote("$dir/", '/').'/', "$prefix/", $x);
+      $x = preg_replace('/\\//', '\\', $x);
+      $x = preg_replace('/^\\\\/', '', $x);
+      $x = preg_replace('/\\.php$/', '', $x);
+      return $x;
+    }, $ret);
+  }
+
+  /**
+   * Return array containing the fully-qualified names of all currently loaded
+   * classes. This includes classes loaded by other classloaders and classes
+   * that are loaded by php itself on startup.
+   *
+   * @return array The list of fully-qualified class names.
+   */
+  public static function listDeclaredClasses() {
+    return get_declared_classes();
   }
 
   /**
@@ -312,6 +357,28 @@ class ClassLoader {
     }
 
     return $ret;
+  }
+
+  /**
+   * Returns array containing the names of all namespaces which are children of
+   * the given $prefix namespace.
+   *
+   * @param string $ns The namespace to search.
+   * @return array The list of sub-namespaces.
+   */
+  public static function listNamespacesInNamespace($ns='') {
+    return static::listSubnamespaces($ns, false);
+  }
+
+  /**
+   * Returns array containing the names of all classes defined in the given
+   * $prefix namespace.
+   *
+   * @param string $ns The namespace to search.
+   * @return array The list of class names.
+   */
+  public static function listClassesInNamespace($ns='') {
+    return static::listSubnamespaces($ns, true);
   }
 
   /**

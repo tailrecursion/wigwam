@@ -25,4 +25,30 @@ class ConsoleCommand {
     return $argline;
   }
 
+  public static function h($argline) {
+    global $argv;
+    $name = basename($argv[0]);
+    $help = <<<EOT
+
+Usage: $name [OPTIONS]
+
+Where OPTIONS are:
+
+  -h          Print usage info and exit.
+  -q          Don't echo the result after evaling each expression.
+  -z          Run script files but don't start interactive REPL.
+  -f <file>   Eval the contents of <file> prior to starting REPL.
+
+The following commands are available inside the REPL environment:
+
+  /h          Print usage info.
+  /pp         Toggle echoing the result of each eval.
+  /p <expr>   Toggle echoing the result just for this expression.
+
+EOT;
+
+    echo "$help\n";
+    return '';
+  }
+
 }
