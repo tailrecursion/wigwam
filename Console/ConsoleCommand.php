@@ -37,18 +37,24 @@ Where OPTIONS are:
   -h          Print usage info and exit.
   -q          Don't echo the result after evaling each expression.
   -z          Run script files but don't start interactive REPL.
-  -f <file>   Eval the contents of <file> prior to starting REPL.
+  -f <file>   Require() <file> prior to starting REPL.
 
 The following commands are available inside the REPL environment:
 
   /h          Print usage info.
   /pp         Toggle echoing the result of each eval.
   /p <expr>   Toggle echoing the result just for this expression.
+  /f <file>   Require() <file>.
 
 EOT;
 
     echo "$help\n";
     return '';
+  }
+
+  public static function f($argline) {
+    $f = trim($argline);
+    return "require '$f'";
   }
 
 }

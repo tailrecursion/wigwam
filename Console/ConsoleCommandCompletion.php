@@ -99,10 +99,6 @@ class ConsoleCommandCompletion {
       $vv = removeSigil($v[3]);
       return $this->matchClassStaticVar("{$v[0]}\\{$v[1]}", $vv);
     }
-
-    error_log("\n--- completion not found ---");
-    error_log(var_export($t, true));
-    error_log(var_export($v, true));
   }
 
   private function collapseNamespace(&$t, &$v) {
