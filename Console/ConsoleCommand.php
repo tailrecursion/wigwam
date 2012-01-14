@@ -1,11 +1,34 @@
 <?php namespace Wigwam\Console;
 
 use RuntimeException;
+use ReflectionClass;
+
+function showDocComment($dc) {
+  return preg_replace('/^  */m', ' ', $dc);
+}
+
+function docForClass($class) {
+  $r = new ReflectionClass($class);
+  return showDocComment($r->getDocComment());
+}
+
+function docForClassMethod($class, $v) {
+  $r = new ReflectionClass($class);
+  $m = $r->getMethod($v);
+  return showDocComment($m->getDocComment());
+}
+
+function docForClassProperty($class, $v) {
+  $v = removeSigil($v);
+  $r = new ReflectionClass($class);
+  $m = $r->getProperty($v);
+  return showDocComment($m->getDocComment());
+}
 
 class ConsoleCommand {
 
   public static function doit($line) {
-    if (! preg_match('/^\\/([^\\s]*)(\s+(.*))?$/', $line, $m))
+    if (! preg_match('/^\\/([^\\s\/]*)(\s+(.*))?$/', $line, $m))
       return $line;
 
     $argline = isset($m[3]) ? $m[3] : null;
@@ -22,6 +45,11 @@ class ConsoleCommand {
 
   public static function p($argline) {
     Console::$printnext = (! Console::$printnext);
+    return $argline;
+  }
+
+  public static function q($argline) {
+    Console::$printnext = false;
     return $argline;
   }
 
@@ -44,7 +72,9 @@ The following commands are available inside the REPL environment:
   /h          Print usage info.
   /pp         Toggle echoing the result of each eval.
   /p <expr>   Toggle echoing the result just for this expression.
+  /q <expr>   Disable echoing the result of this expression.
   /f <file>   Require() <file>.
+  /d <thing>  Get the doc comment for the <thing>.
 
 EOT;
 
@@ -55,6 +85,32 @@ EOT;
   public static function f($argline) {
     $f = trim($argline);
     return "require '$f'";
+  }
+
+  public static function d($argline) {
+    $T_PREFIX = ConsoleCommandCompletion::T_PREFIX;
+    $c = new ConsoleCommandCompletion();
+    $c->parseBuf($argline, $t, $v);
+
+    if ($t == array(T_STRING))
+      error_log(docForClass($v[0]));
+
+    if ($t == array($T_PREFIX, T_STRING))
+      error_log(docForClass("{$v[0]}\\{$v[1]}"));
+
+    if ($t == array(T_STRING, T_DOUBLE_COLON, T_STRING, '(', ')'))
+      error_log(docForClassMethod($v[0], $v[2]));
+
+    if ($t == array($T_PREFIX, T_STRING, T_DOUBLE_COLON, T_STRING, '(', ')'))
+      error_log(docForClassMethod("{$v[0]}\\{$v[1]}", $v[3]));
+
+    if ($t == array(T_STRING, T_DOUBLE_COLON, T_VARIABLE))
+      error_log(docForClassProperty($v[0], $v[2]));
+
+    if ($t == array($T_PREFIX, T_STRING, T_DOUBLE_COLON, T_VARIABLE))
+      error_log(docForClassProperty("{$v[0]}\\{$v[1]}", $v[3]));
+
+    return '';
   }
 
 }

@@ -14,9 +14,7 @@ class ConsoleCommandCompletion {
 
   const T_PREFIX = -1;
 
-  public $classes;
-
-  public function complete($buf) {
+  public function parseBuf($buf, &$t, &$v) {
     $tok  = token_get_all("<?php $buf");
 
     array_shift($tok); //remove the '<?php' token
@@ -42,6 +40,10 @@ class ConsoleCommandCompletion {
     }, array());
 
     static::collapseNamespace($t, $v);
+  }
+
+  public function complete($buf) {
+    $this->parseBuf($buf, $t, $v);
 
     if ($t == array(T_VARIABLE)) {
       $v[0] = preg_replace('/^\\$/', '', $v[0]);
@@ -200,12 +202,11 @@ class ConsoleCommandCompletion {
   private function matchStaticMethod($class, $v) {
     $c = preg_replace('/^.*\\\\/', '', $class);
     $r = new ReflectionClass($class);
-    $m = $r->getMethods(ReflectionMethod::IS_PUBLIC 
-      | ReflectionMethod::IS_ABSTRACT| ReflectionMethod::IS_STATIC);
+    $m = $r->getMethods(ReflectionMethod::IS_PUBLIC);
 
-    $m = array_map(function($x) {
-      return $x->getName();
-    }, $m);
+    $m = array_filter(array_map(function($x) {
+      return $x->isStatic() ? $x->getName() : null;
+    }, $m));
 
     $h = $r->implementsInterface('Wigwam\\Console\\ConsoleCompletionHelper')
       ? call_user_func(array($class, 'completeMethodStatic'))

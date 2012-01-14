@@ -2,8 +2,12 @@
 
 use \RuntimeException;
 
+/**
+ * This is the Console class.
+ */
 class Console {
  
+  /** Current prompt. */
   public static $PS1    = 'php> ';
   public static $PS2    = '  *> ';
   public static $DEBUG  = false;
@@ -149,58 +153,6 @@ class Console {
       throw new RuntimeException("can't write to socket");
   }
 
-  public static function getReflection($thing) {
-    switch (true) {
-      case is_array($thing):
-        return $thing;
-
-      case is_object($thing):
-        return new ReflectionObject($thing);
-
-      case class_exists($thing):
-        return new ReflectionClass($thing);
-
-      case function_exists($thing):
-        return new ReflectionFunction($thing);
-
-      case strstr($thing, '::'):
-        list($class, $what) = explode('::', $thing);
-        $rc = new ReflectionClass($class);
-
-        switch (true) {
-          case substr($what, -2) == '()':
-            $what = substr($what, 0, strlen($what) - 2);
-
-          case $rc->hasMethod($what):
-            return $rc->getMethod($what);
-
-          case substr($what, 0, 1) == '$':
-            $what = substr($what, 1);
-
-          case $rc->hasProperty($what):
-            return $rc->getProperty($what);
-
-          case $rc->hasConstant($what):
-            return $rc->getConstant($what);
-        }
-
-      case is_string($thing):
-      case is_numeric($thing):
-      case $thing == true:
-      case $thing == false:
-        return $thing;
-    }
-  }
-
-  public static function getReflectionString($thing) {
-    return var_export(
-      is_string($thing) || is_object($thing)
-        ? $thing 
-        : static::getReflection($thing),
-      true
-    );
-  }
-
   public static function getHistFile() {
     return $_SERVER['HOME']."/.console.php.history";
   }
@@ -246,6 +198,10 @@ class Console {
       readline_write_history(static::getHistFile());
     } else
       $line = ' ';
+
+    if (static::$reboot)
+      $line = '/q Wigwam\\Console\\Console::$reboot = true';
+
     return $line;
   }
 
@@ -263,7 +219,7 @@ class Console {
     $line = ConsoleCommand::doit($line);
 
     if ($line && static::$printnext && static::printableLine($line))
-      $line = 'printf("=> %s\n", Wigwam\Console\Console::getReflectionString('.$line.'))';
+      $line = 'printf("=> %s\n", var_export('.$line.', true))';
     $line .= ';';
 
     static::$printnext = static::$print;
