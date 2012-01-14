@@ -10,6 +10,8 @@ use Wigwam\Console\ConsoleCommand;
 if (! class_exists('Wigwam\\ClassLoader'))
   require_once(__DIR__.'/../ClassLoader.php');
 
+Console::setup();
+
 Console::$option = getopt('f:hqz');
 
 if (isset(Console::$option['h'])) {

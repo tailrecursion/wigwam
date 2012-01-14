@@ -78,22 +78,28 @@ class Console {
     global $argv;
 
     error_reporting(0);
-    ini_set('error_log', '');
 
-    static::$argv = $argv;
+    static::getSocks();
+    static::$argv       = $argv;
+    static::$completer  = new ConsoleCommandCompletion();
+
+    readline_read_history(static::getHistFile());
 
     register_shutdown_function(function() {
       if ($e = error_get_last())
         error_log("ERROR: {$e['message']}\nIn {$e['file']} line {$e['line']}");
+      die();
     });
 
     set_error_handler(function ($errno, $errstr, $errfile, $errline) {
       error_log("ERROR: $errstr\nIn $errfile line $errline");
+      die();
     });
 
     set_exception_handler(function($e) {
       printf("%s: %s\nIn %s line %s\n",
         get_class($e), $e->getMessage(), $e->getFile(), $e->getLine());
+      die();
     });
 
     readline_completion_function(function($buf, $i) {
@@ -114,10 +120,6 @@ class Console {
         return $match;
       }
     });
-
-    readline_read_history(static::getHistFile());
-    static::$completer = new ConsoleCommandCompletion();
-    static::getSocks();
   }
 
   public static function fork(&$pid) {
