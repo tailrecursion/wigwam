@@ -12,13 +12,22 @@ if (! class_exists('Wigwam\\ClassLoader'))
 
 Console::setup();
 
-Console::$option = getopt('f:hqz');
+Console::$option = getopt('f:v:hqz');
 
 if (isset(Console::$option['h'])) {
   ConsoleCommand::h('');
   exit();
 }
 
+if (isset(Console::$option['v'])) {
+  if (is_array(Console::$option['v']))
+    foreach (Console::$option['v'] as Console::$tmp)
+      $GLOBALS[preg_replace('/=.*$/', '', Console::$tmp)] =
+        preg_replace('/^[^=]+=/', '', Console::$tmp);
+  else
+    $GLOBALS[preg_replace('/=.*$/', '', Console::$option['v'])] =
+      preg_replace('/^[^=]+=/', '', Console::$option['v']);
+}
 
 if (isset(Console::$option['f'])) {
   if (is_array(Console::$option['f']))

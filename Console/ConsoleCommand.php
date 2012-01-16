@@ -63,19 +63,20 @@ Usage: $name [OPTIONS]
 
 Where OPTIONS are:
 
-  -h          Print usage info and exit.
-  -q          Don't echo the result after evaling each expression.
-  -z          Run script files but don't start interactive REPL.
-  -f <file>   Require() <file> prior to starting REPL.
+  -h            Print usage info and exit.
+  -q            Don't echo the result after evaling each expression.
+  -z            Run script files but don't start interactive REPL.
+  -f <file>     Require() <file> prior to starting REPL.
+  -v <var=val>  Set \$var to "val" globally.
 
 The following commands are available inside the REPL environment:
 
-  /h          Print usage info.
-  /pp         Toggle echoing the result of each eval.
-  /p <expr>   Toggle echoing the result just for this expression.
-  /q <expr>   Disable echoing the result of this expression.
-  /f <file>   Require() <file>.
-  /d <thing>  Get the doc comment for the <thing>.
+  /h            Print usage info.
+  /pp           Toggle echoing the result of each eval.
+  /p <expr>     Toggle echoing the result just for this expression.
+  /q <expr>     Disable echoing the result of this expression.
+  /f <file>     Require() <file>.
+  /d <thing>    Get the doc comment for the <thing>.
 
 EOT;
 
