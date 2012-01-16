@@ -4,7 +4,8 @@ use RuntimeException;
 use ReflectionClass;
 
 function showDocComment($dc) {
-  return preg_replace('/^  */m', ' ', $dc);
+  $dc = preg_replace('/^  */m', ' ', $dc);
+  return strlen($dc) ? $dc : "No docs available.";
 }
 
 function docForClass($class) {
@@ -88,27 +89,24 @@ EOT;
   }
 
   public static function d($argline) {
-    $T_PREFIX = ConsoleCommandCompletion::T_PREFIX;
-    $c = new ConsoleCommandCompletion();
+    $T_CLASS = ConsoleCommandCompletion::T_CLASS;
+    $c = new ConsoleCommandCompletion(true);
     $c->parseBuf($argline, $t, $v);
 
-    if ($t == array(T_STRING))
-      error_log(docForClass($v[0]));
-
-    if ($t == array($T_PREFIX, T_STRING))
-      error_log(docForClass("{$v[0]}\\{$v[1]}"));
-
-    if ($t == array(T_STRING, T_DOUBLE_COLON, T_STRING, '(', ')'))
-      error_log(docForClassMethod($v[0], $v[2]));
-
-    if ($t == array($T_PREFIX, T_STRING, T_DOUBLE_COLON, T_STRING, '(', ')'))
-      error_log(docForClassMethod("{$v[0]}\\{$v[1]}", $v[3]));
-
-    if ($t == array(T_STRING, T_DOUBLE_COLON, T_VARIABLE))
-      error_log(docForClassProperty($v[0], $v[2]));
-
-    if ($t == array($T_PREFIX, T_STRING, T_DOUBLE_COLON, T_VARIABLE))
-      error_log(docForClassProperty("{$v[0]}\\{$v[1]}", $v[3]));
+    switch ($t) {
+      case array(T_STRING):
+      case array($T_CLASS):
+        error_log(docForClass($v[0]));
+        break;
+      case array($T_CLASS, T_DOUBLE_COLON, T_STRING, '(', ')'):
+        error_log(docForClassMethod($v[0], $v[2]));
+        break;
+      case array($T_CLASS, T_DOUBLE_COLON, T_VARIABLE):
+        error_log(docForClassProperty($v[0], $v[2]));
+        break;
+      default:
+        error_log("No docs available: query isn't a class, property, or method.");
+    }
 
     return '';
   }

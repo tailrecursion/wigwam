@@ -10,9 +10,39 @@ function removeSigil($v) {
   return preg_replace('/^\\$/', '', $v);
 }
 
+function mytoken_name($t) {
+  switch ($t) {
+    case ConsoleCommandCompletion::T_PREFIX:
+      return 'T_PREFIX';
+      break;
+    case ConsoleCommandCompletion::T_CLASS:
+      return 'T_CLASS';
+      break;
+  }
+}
+
+function tname($t) {
+  return is_int($t)
+    ? ($t < 0 ? mytoken_name($t) : token_name($t))
+    : $t;
+}
+
+function tname_array($t) {
+  return array_map(function($x) {
+    return tname($x);
+  }, $t);
+}
+
 class ConsoleCommandCompletion {
 
   const T_PREFIX = -1;
+  const T_CLASS  = -2;
+
+  public $forceStatic;
+
+  public function __construct($forceStatic) {
+    $this->forceStatic = $forceStatic;
+  }
 
   public function parseBuf($buf, &$t, &$v) {
     $tok  = token_get_all("<?php $buf");
@@ -40,66 +70,51 @@ class ConsoleCommandCompletion {
     }, array());
 
     static::collapseNamespace($t, $v);
+    static::collapseClass($t, $v);
   }
 
   public function complete($buf) {
     $this->parseBuf($buf, $t, $v);
 
-    if ($t == array(T_VARIABLE)) {
-      $v[0] = preg_replace('/^\\$/', '', $v[0]);
-      $m = $this->matchVariable($v[0]);
-      return $m;
-    }
+    switch ($t) {
+      case array(T_VARIABLE):
+        $v[0] = preg_replace('/^\\$/', '', $v[0]);
+        $m = $this->matchVariable($v[0]);
+        return $m;
 
-    if ($t == array(T_VARIABLE, T_OBJECT_OPERATOR)) {
-      $class  = get_class($GLOBALS[removeSigil($v[0])]);
-      return $this->matchObjVarOrMethod($class, '');
-    }
+      case array(T_VARIABLE, T_OBJECT_OPERATOR):
+        $class  = get_class($GLOBALS[removeSigil($v[0])]);
+        return $this->matchObjVarOrMethod($class, '');
 
-    if ($t == array(T_VARIABLE, T_OBJECT_OPERATOR, T_STRING)) {
-      $class  = get_class($GLOBALS[removeSigil($v[0])]);
-      return $this->matchObjVarOrMethod($class, $v[2]);
-    }
+      case array(T_VARIABLE, T_OBJECT_OPERATOR, T_STRING):
+        $class  = get_class($GLOBALS[removeSigil($v[0])]);
+        return $this->matchObjVarOrMethod($class, $v[2]);
 
-    if ($t == array(T_STRING)) {
-      return array_merge(
-        $this->matchFunction($v[0]),
-        $this->matchConstant($v[0]),
-        $this->matchClassOrNamespace($v[0], '')
-      );
-    }
+      case array(T_STRING):
+        return array_merge(
+          $this->matchFunction($v[0]),
+          $this->matchConstant($v[0]),
+          $this->matchClassOrNamespace($v[0], '')
+        );
 
-    if ($t == array(T_STRING, T_DOUBLE_COLON)) {
-      return $this->matchClassConstStaticMethodOrVarSigil($v[0]);
-    }
+      case array(self::T_CLASS, T_DOUBLE_COLON):
+        return $this->matchClassConstStaticMethodOrVarSigil($v[0]);
 
-    if ($t == array(T_STRING, T_DOUBLE_COLON, T_STRING)) {
-      return $this->matchClassConstOrStaticMethod($v[0], $v[2]);
-    }
+      case array(self::T_CLASS, T_DOUBLE_COLON, T_STRING):
+        return $this->matchClassConstOrStaticMethod($v[0], $v[2]);
 
-    if ($t == array(self::T_PREFIX)) {
-      return $this->matchClassOrNamespace(array(''), $v[0]);
-    }
+      case array(self::T_CLASS, T_DOUBLE_COLON, '$'):
+        return $this->matchClassStaticVar($v[0], '');
 
-    if ($t == array(self::T_PREFIX, T_STRING)) {
-      return $this->matchClassOrNamespace($v[1], $v[0]);
-    }
+      case array(self::T_CLASS, T_DOUBLE_COLON, T_VARIABLE):
+        $vv = removeSigil($v[2]);
+        return $this->matchClassStaticVar($v[0], $vv);
 
-    if ($t == array(self::T_PREFIX, T_STRING, T_DOUBLE_COLON)) {
-      return $this->matchClassConstStaticMethodOrVarSigil("{$v[0]}\\{$v[1]}");
-    }
+      case array(self::T_PREFIX):
+        return $this->matchClassOrNamespace(array(''), $v[0]);
 
-    if ($t == array(self::T_PREFIX, T_STRING, T_DOUBLE_COLON, T_STRING)) {
-      return $this->matchClassConstOrStaticMethod("{$v[0]}\\{$v[1]}", $v[3]);
-    }
-
-    if ($t == array(self::T_PREFIX, T_STRING, T_DOUBLE_COLON, '$')) {
-      return $this->matchClassStaticVar("{$v[0]}\\{$v[1]}", '');
-    }
-
-    if ($t == array(self::T_PREFIX, T_STRING, T_DOUBLE_COLON, T_VARIABLE)) {
-      $vv = removeSigil($v[3]);
-      return $this->matchClassStaticVar("{$v[0]}\\{$v[1]}", $vv);
+      case array(self::T_PREFIX, T_STRING):
+        return $this->matchClassOrNamespace($v[1], $v[0]);
     }
   }
 
@@ -116,6 +131,20 @@ class ConsoleCommandCompletion {
       array_unshift($t, self::T_PREFIX);
       array_unshift($v, implode('\\', $ns));
     }
+  }
+
+  private function collapseClass(&$t, &$v) {
+    if (count($t) >= 3 && $t[0] == self::T_PREFIX && $t[1] == T_STRING
+      && $t[2] == T_DOUBLE_COLON) {
+      array_splice($t, 0, 2, self::T_CLASS);
+      array_splice($v, 0, 2, "{$v[0]}\\{$v[1]}");
+    }
+    elseif (count($t) >= 2 && $t[0] == T_VARIABLE && $t[1] == T_DOUBLE_COLON) {
+      $t[0] = self::T_CLASS;
+      $v[0] = $GLOBALS[removeSigil($v[0])];
+    }
+    elseif (count($t) >= 2 && $t[0] == T_STRING && $t[1] == T_DOUBLE_COLON)
+      $t[0] = self::T_CLASS;
   }
 
   private function match($v, $arr) {
@@ -155,13 +184,11 @@ class ConsoleCommandCompletion {
   }
 
   private function matchClassStaticVar($class, $v) {
-    $c = preg_replace('/^.*\\\\/', '', $class);
-    $r = new ReflectionClass($class);
-    $m = $r->getProperties(ReflectionMethod::IS_STATIC);
-
-    $m = array_filter(array_map(function($x) {
-      return $x->isPublic() ? $x->getName() : null;
-    }, $m));
+    $r      = new ReflectionClass($class);
+    $xthis  = $this;
+    $m = array_filter(array_map(function($x) use ($xthis) {
+      return $x->isStatic() || $xthis->forceStatic ? $x->getName() : null;
+    }, $r->getProperties(ReflectionProperty::IS_PUBLIC)));
 
     return $this->match($v, $m);
   }
@@ -200,13 +227,13 @@ class ConsoleCommandCompletion {
   }
 
   private function matchStaticMethod($class, $v) {
-    $c = preg_replace('/^.*\\\\/', '', $class);
-    $r = new ReflectionClass($class);
-    $m = $r->getMethods(ReflectionMethod::IS_PUBLIC);
+    $c      = preg_replace('/^.*\\\\/', '', $class);
+    $r      = new ReflectionClass($class);
+    $xthis  = $this;
 
-    $m = array_filter(array_map(function($x) {
-      return $x->isStatic() ? $x->getName() : null;
-    }, $m));
+    $m = array_filter(array_map(function($x) use ($xthis) {
+      return $x->isStatic() || $xthis->forceStatic ? $x->getName() : null;
+    }, $r->getMethods(ReflectionMethod::IS_PUBLIC)));
 
     $h = $r->implementsInterface('Wigwam\\Console\\ConsoleCompletionHelper')
       ? call_user_func(array($class, 'completeMethodStatic'))

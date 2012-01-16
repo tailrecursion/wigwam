@@ -19,6 +19,7 @@ if (isset(Console::$option['h'])) {
   exit();
 }
 
+
 if (isset(Console::$option['f'])) {
   if (is_array(Console::$option['f']))
     foreach (Console::$option['f'] as Console::$tmp)
@@ -30,10 +31,10 @@ if (isset(Console::$option['f'])) {
 if (isset(Console::$option['z']))
   exit();
 
+Console::setup();
+
 if (isset(Console::$option['q']))
   Console::$print = Console::$printnext = false;
-
-Console::setup();
 
 echo "\nConsole ready. Press ctrl-d to reload, ctrl-c to quit, /h for help.\n\n";
 

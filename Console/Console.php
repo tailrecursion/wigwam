@@ -8,23 +8,23 @@ use \RuntimeException;
 class Console {
  
   /** Current prompt. */
-  public static $PS1    = 'php> ';
-  public static $PS2    = '  *> ';
-  public static $DEBUG  = false;
+  public static $PS1        = 'php> ';
+  public static $PS2        = '  *> ';
+  public static $HISTSIZE   = 1000;
+  public static $DEBUG      = false;
 
-  public static $getopt = "f:q";
-  public static $option = array();
+  public static $getopt     = "f:q";
+  public static $option     = array();
 
   public static $print      = true;
   public static $printnext  = true;
 
-  public static $sock   = array();
-  public static $reboot = false;
+  public static $sock       = array();
+  public static $reboot     = false;
   public static $pid1;
   public static $pid2;
   public static $pid3;
   public static $status;
-  public static $completer;
   public static $tmp;
 
   public static $argv;
@@ -81,7 +81,6 @@ class Console {
 
     static::getSocks();
     static::$argv       = $argv;
-    static::$completer  = new ConsoleCommandCompletion();
 
     readline_read_history(static::getHistFile());
 
@@ -106,8 +105,6 @@ class Console {
       $orig   = $buf;
       $info   = readline_info();
       $buf    = substr($info['line_buffer'], 0 , $info['point']);
-
-//      error_log("\norig='$orig'");
 
       // Prevent empty completion request from being sent, as it would cause
       // the socket to block forever waiting for the response.
@@ -189,16 +186,38 @@ class Console {
       : false;
   }
 
+  public static function updateHistFile($line) {
+    readline_add_history($line);
+    static::writeHistFile();
+  }
+
+  public static function writeHistFile() {
+    $f    = static::getHistFile();
+    $siz  = static::$HISTSIZE;
+
+    if (! readline_write_history($f))
+      return;
+
+    // Prevent history file from growing arbitrarily large.
+
+    // NOTE: This code is specific to libedit, possibly. It may or may not
+    // work correctly with libreadline. Specifically, libedit seems to need to
+    // have '_HiStOrY_V2_' as the first line of the file.
+
+    $head     = `head -n 1 '$f'`;
+    $trimmed  = `tail -n $siz '$f'`;
+    file_put_contents($f, "$head$trimmed");
+  }
+
   public static function doReadline($prompt) {
     $line = readline($prompt);
 
     if ($line === false)
       static::$reboot = true;
 
-    if (strlen($line)) {
-      readline_add_history($line);
-      readline_write_history(static::getHistFile());
-    } else
+    if (strlen($line))
+      static::updateHistFile($line);
+    else
       $line = ' ';
 
     if (static::$reboot)
@@ -254,8 +273,11 @@ class Console {
   }
 
   public static function serviceCompletionRequests() {
-    while (($tmp = static::getCompletionReq()) != ':done:')
-      static::sendCompletionResp(static::$completer->complete($tmp));
+    while (($tmp = static::getCompletionReq()) != ':done:') {
+      $forceStatic = preg_match('/^\\/d /', $tmp);
+      $c = new ConsoleCommandCompletion($forceStatic);
+      static::sendCompletionResp($c->complete($tmp));
+    }
   }
 
   public static function endCompletions() {
