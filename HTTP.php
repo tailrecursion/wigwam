@@ -312,6 +312,8 @@ class HTTP {
 
     $rfl->addTagHandler('role', new Auth($app));
     $this->apps[] = $rfl->run();
+
+    return $this;
   }
 
   // Unset session data and destroy session cookie.
