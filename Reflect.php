@@ -114,9 +114,8 @@ class Reflect {
             return array(
               'name'  => $tag['name'],
               'args'  => array_map(function($param) use ($params) {
-                if (!array_key_exists($param, $params))
-                  throw new BadArgument("Tag argument not found: $param");
-                return $params[$param];
+                return array_key_exists($param, $params)
+                  ? $params[$param] : $param;
               }, $tag['args']),
             );
           }, $line);

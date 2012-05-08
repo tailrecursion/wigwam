@@ -39,7 +39,7 @@ function getExceptionDefs() {
   }, ArrayUtils::tsort($dag))));
 }
 
-include(dirname(__FILE__).'/../Wigwam/vendor/js/json2.js');
+include(__DIR__.'/vendor/js/json2.js');
 ?>
 
 /**

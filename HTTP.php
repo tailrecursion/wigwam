@@ -13,7 +13,6 @@ class HTTP {
   public  $err;
   private $requestBodyParser;
   private $apps;
-  private $classesDir;
 
   //===========================================================================//
   // SETUP SLIM & HTTP WRAPPER                                                 //
@@ -21,9 +20,7 @@ class HTTP {
 
   public function __construct($config=array()) {
 
-    $this->classesDir = dirname(__FILE__)."/..";
-
-    require $this->classesDir.'/Wigwam/vendor/Slim/Slim.php';
+    require __DIR__.'/vendor/Slim/Slim.php';
 
     $xthis      = $this;
     $this->apps = array();
@@ -32,7 +29,7 @@ class HTTP {
     // when $config is not an associative array of key/value pairs.
 
     if (! ArrayUtils::isAssoc($config)) {
-      array_unshift($config, $this->classesDir.'/Wigwam/config/config.yaml');
+      array_unshift($config, __DIR__.'/config/config.yaml');
       $config = HTTP::yamlConfig($config);
     }
 
@@ -45,6 +42,13 @@ class HTTP {
 
     $error_handler = function($errno, $errstr, $errfile, $errline) {
       error_log("Wigwam error: $errstr in $errfile on line $errline");
+
+      header("HTTP/1.1 500 Server Error");
+      header("Content-Type: application/json");
+      echo json_encode(array(
+        'exception'   => 'Wigwam\\FatalException',
+        'message'     => "$errstr in $errfile, $errline",
+      ));
     };
     set_error_handler($error_handler);
 
@@ -58,12 +62,23 @@ class HTTP {
       if (!$error['type'] || preg_match($pattern, $error['message']))
         return;
 
+      $errstr   = $error['message'];
+      $errfile  = $error['file'];
+      $errline  = $error['line'];
+
       error_log(sprintf(
         $template,
         $error['type'],
         $error['message'],
         $error['file'],
         $error['line']
+      ));
+
+      header("HTTP/1.1 500 Server Error");
+      header("Content-Type: application/json");
+      echo json_encode(array(
+        'exception'   => 'Wigwam\\FatalException',
+        'message'     => "$errstr in $errfile, $errline",
       ));
     };
     register_shutdown_function($shutdown_handler);
@@ -155,7 +170,7 @@ class HTTP {
     // Initialize the Slim application framework.
 
     Slim::init(array(
-      'templates.path'    => $this->classesDir.'/Wigwam/vendor/templates',
+      'templates.path'    => __DIR__.'/vendor/templates',
       'view'              => $theView,
       'mode'              => $config['http.mode'],
       'log.path'          => $config['http.log'],
@@ -378,7 +393,7 @@ class HTTP {
 
   public function makeJSRuntime($api) {
     Slim::response()->header('Content-Type', 'text/javascript');
-    include($this->classesDir.'/Wigwam/jsruntime.php');
+    include(__DIR__.'/jsruntime.php');
   }
 
   public function run($routes=null) {
