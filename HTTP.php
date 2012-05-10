@@ -3,6 +3,7 @@
 use Slim;
 use Wigwam\Reflect;
 use Wigwam\HTTP\Auth;
+use Wigwam\HTTP\Verb;
 use Wigwam\HTTP\View\ByAcceptHeader;
 use Wigwam\HTTP\RequestBody\ByContentType;
 use Wigwam\HTTP\Session\Noop;
@@ -49,6 +50,7 @@ class HTTP {
         'exception'   => 'Wigwam\\FatalException',
         'message'     => "$errstr in $errfile, $errline",
       ));
+      die();
     };
     set_error_handler($error_handler);
 
@@ -80,6 +82,7 @@ class HTTP {
         'exception'   => 'Wigwam\\FatalException',
         'message'     => "$errstr in $errfile, $errline",
       ));
+      die();
     };
     register_shutdown_function($shutdown_handler);
 
@@ -293,7 +296,9 @@ class HTTP {
     $rfl_path = preg_replace('/\\\\/','/',$rfl->getName());
 
     $rfl->addParseHandler(function($method) use ($xthis, $rfl, $rfl_path) {
-      $method['verb']   = preg_replace('/[[:upper:]].*$/', '', $method['name']);
+      $method['verb'] = isset($method['tags']['verb'][0][0]['name'])
+        ? $method['tags']['verb'][0][0]['name']
+        : 'foo';
       $method['route']  = '/'.$rfl_path.'/'.$method['name'];
 
       if (in_array($method['verb'], array('get','post','put','delete')))
@@ -311,6 +316,7 @@ class HTTP {
     });
 
     $rfl->addTagHandler('role', new Auth($app));
+    $rfl->addTagHandler('verb', new Verb($app));
     $this->apps[] = $rfl->run();
 
     return $this;
