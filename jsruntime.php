@@ -1,45 +1,49 @@
 <?php
 
 use Wigwam\Utils\ArrayUtils;
+use Wigwam\ClassLoader;
 
 function getExceptionDefs() {
-  $ret    = array();
-  $dir    = dirname(__FILE__);
-  $files  = array('Wigwam.Exception' => 'Error');
+  $ret      = array();
+  $dir      = dirname(__FILE__);
+  $files    = array('Wigwam.Exception' => 'Error');
+  $classes  = ClassLoader::listClassesInNamespace('Wigwam');
 
-  $dag = array_reduce(scandir($dir), function($dag, $file) use ($dir, &$files) {
-    if (is_file("$dir/$file") && !preg_match('/^\\./', $file)
-      && $file !== basename(__FILE__)) {
-      $cls = 'Wigwam\\'.preg_replace('/\\.php$/','',$file);
-      if (class_exists($cls, false) || class_exists($cls)) {
-        $r = new ReflectionClass($cls);
-        if ($r->isSubclassOf('Wigwam\\Exception')) {
-          $p      = $r->getParentClass()->name;
-          $lhs    = preg_replace('/\\\\/', '.', $cls);
-          $rhs    = preg_replace('/\\\\/', '.', $p);
+  $dag = array_reduce($classes, function($dag, $class) use (&$files) {
+    if ($class == 'Exception')
+      return $dag;
 
-          if (!array_key_exists($rhs, $dag))
-            $dag[$rhs] = array($lhs);
-          else
-            $dag[$rhs][] = $lhs;
+    $cls = 'Wigwam\\'.$class;
 
-          if (!array_key_exists($lhs, $dag))
-            $dag[$lhs] = array();
+    if (class_exists($cls, false) || class_exists($cls)) {
+      $r = new ReflectionClass($cls);
 
-          $files[$lhs] = $rhs;
-        }
+      if ($r->isSubclassOf('Wigwam\\Exception')) {
+        $p      = $r->getParentClass()->name;
+        $lhs    = preg_replace('/\\\\/', '.', $cls);
+        $rhs    = preg_replace('/\\\\/', '.', $p);
+
+        if (!array_key_exists($rhs, $dag))
+          $dag[$rhs] = array($lhs);
+        else
+          $dag[$rhs][] = $lhs;
+
+        if (!array_key_exists($lhs, $dag))
+          $dag[$lhs] = array();
+
+        $files[$lhs] = $rhs;
       }
     }
+
     return $dag;
   }, array('Error' => array('Wigwam.Exception')));
 
   return join("\n", array_filter(array_map(function($x) use ($files) {
     if (array_key_exists($x, $files))
-      return sprintf("  %-22s = makeErrClass(%s);", $x, $files[$x]);
+      return sprintf("  %-22s = makeErrClass(%s, '%s');", $x, $files[$x], $x);
   }, ArrayUtils::tsort($dag))));
 }
 
-include(__DIR__.'/vendor/js/json2.js');
 ?>
 
 /**
@@ -78,6 +82,7 @@ include(__DIR__.'/vendor/js/json2.js');
 
     ret.base = base;
     ret.argv = getArgv();
+    ret.api  = api;
 
     return ret;
   }
@@ -107,7 +112,9 @@ include(__DIR__.'/vendor/js/json2.js');
               data={}, ret;
 
           $.each(method.params, function(i,v) {
-            data[v.name] = argv[i];
+            data[v.name] = (argv.length == 1 && $.type(argv[0]) == "object")
+              ? argv[0][v.name]
+              : argv[i];
           });
 
           return function(success, error, sync) {
@@ -142,8 +149,8 @@ include(__DIR__.'/vendor/js/json2.js');
     });
   }
 
-  function makeErrClass(proto) {
-    var F = function(data) { $.extend(this, data) }
+  function makeErrClass(proto, type) {
+    var F = function(data) { $.extend(this, data); this.type = type };
     F.prototype = new proto();
     return F;
   }
@@ -195,7 +202,7 @@ include(__DIR__.'/vendor/js/json2.js');
           } else if ($.isFunction(errcallback)) {
             errcallback(e);
           }
-        },
+        }
       };
 
       if (!process)
