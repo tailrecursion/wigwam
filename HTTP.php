@@ -131,13 +131,16 @@ class HTTP {
     // 'application/json' and 'text/javascript', but we could have others, 
     // such as XML, HTML, plain text, etc.
 
+    // FIXME: Figure out why the last character gets chopped off sometimes
+    // and then remove the space that's appended to the JSON response.
+
     $theView = new ByAcceptHeader(array(
       'application/php' => function ($data) {
         return serialize($data);
       },
 
       'application/json' => function ($data) {
-        return str_replace('\\/', '/', json_encode($data));
+        return str_replace('\\/', '/', json_encode($data))." ";
       },
 
       // Returns javascript that assigns the data to a variable, for example:
@@ -160,7 +163,7 @@ class HTTP {
         $var = is_null($xthis->request()->get('var')) 
           ? 'data' : $xthis->request()->get('var');
         return "window.$var = \$.extend(window.$var === undefined ? {} : window.$var, "
-          .json_encode($data).');';
+          .json_encode($data).'); ';
       },
 
       // Default to text/javascript because then you can use this to load
