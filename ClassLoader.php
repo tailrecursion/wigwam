@@ -200,7 +200,6 @@ class ClassLoader {
         return $f;
       elseif (count( ($vend_glob = glob("$root/vendor/*/$relpath")) ))
         return $vend_glob[0];
-      return;
     }
 
     foreach (static::$paths as $path)
