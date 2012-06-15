@@ -88,5 +88,11 @@ class ArrayUtils {
     return !empty($array) && is_array($array) && array_values($array) !== $array;
   }
 
+  public static function toKeyValMaps($map) {
+    $ret = array();
+    foreach ($map as $k => $v)
+      $ret[] = array('key' => $k, 'val' => $v);
+    return $ret;
+  }
 }  
 
