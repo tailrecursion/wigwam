@@ -11,9 +11,14 @@ use Wigwam\Utils\ArrayUtils;
 
 class HTTP {
 
-  public  $err;
-  private $requestBodyParser;
-  private $apps;
+  const         MODE_DEV        = "dev";
+  const         MODE_PRODUCTION = "production";
+
+  public        $err;
+  public static $mode;
+
+  private       $requestBodyParser;
+  private       $apps;
 
   //===========================================================================//
   // SETUP SLIM & HTTP WRAPPER                                                 //
@@ -44,11 +49,15 @@ class HTTP {
     $error_handler = function($errno, $errstr, $errfile, $errline) {
       error_log("Wigwam error: $errstr in $errfile on line $errline");
 
+      $msg = HTTP::$mode == HTTP::MODE_PRODUCTION
+        ? "Something went wrong."
+        : "$errstr in $errfile, $errline";
+
       header("HTTP/1.1 500 Server Error");
       header("Content-Type: application/json");
       echo json_encode(array(
         'exception'   => 'Wigwam\\FatalException',
-        'message'     => "$errstr in $errfile, $errline",
+        'message'     => $msg,
       ));
       die();
     };
@@ -76,11 +85,15 @@ class HTTP {
         $error['line']
       ));
 
+      $msg = HTTP::$mode == HTTP::MODE_PRODUCTION
+        ? "Something went wrong."
+        : "$errstr in $errfile, $errline";
+
       header("HTTP/1.1 500 Server Error");
       header("Content-Type: application/json");
       echo json_encode(array(
         'exception'   => 'Wigwam\\FatalException',
-        'message'     => "$errstr in $errfile, $errline",
+        'message'     => $msg,
       ));
       die();
     };

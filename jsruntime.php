@@ -2,6 +2,7 @@
 
 use Wigwam\Utils\ArrayUtils;
 use Wigwam\ClassLoader;
+use Wigwam\HTTP;
 
 function getExceptionDefs() {
   $ret      = array();
@@ -55,6 +56,7 @@ function getExceptionDefs() {
 
   var api   = <?php echo str_replace('\\/', '/', json_encode($api)) ?>;
   var base  = "<?php echo dirname($_SERVER['REQUEST_URI']) ?>";
+  var mode  = "<?php echo HTTP::$mode ?>";
 
   function nestedObj(a, b, c) {
     var x = c,
@@ -83,6 +85,7 @@ function getExceptionDefs() {
     ret.base = base;
     ret.argv = getArgv();
     ret.api  = api;
+    ret.mode = mode;
 
     return ret;
   }
