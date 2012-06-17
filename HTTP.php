@@ -11,11 +11,11 @@ use Wigwam\Utils\ArrayUtils;
 
 class HTTP {
 
-  const         MODE_DEV        = "dev";
+  const         MODE_DEV        = "development";
+  const         MODE_STAGING    = "staging";
   const         MODE_PRODUCTION = "production";
 
   public        $err;
-  public static $mode;
 
   private       $requestBodyParser;
   private       $apps;
@@ -31,13 +31,17 @@ class HTTP {
     $xthis      = $this;
     $this->apps = array();
 
-    // Load config from YAML if $config is an array of filenames (we know this
-    // when $config is not an associative array of key/value pairs.
+    // $config can be an assoc array of key/value config options, or an array of
+    // filenames of yaml files containing the desired config options.
 
-    if (! ArrayUtils::isAssoc($config)) {
-      array_unshift($config, __DIR__.'/config/config.yaml');
+    $cc = yaml_parse_file(__DIR__.'/config/config.yaml'); // default configs
+
+    if (! ArrayUtils::isAssoc($config))
       $config = HTTP::yamlConfig($config);
-    }
+
+    // "Overlay" the user-provided configs over the default ones.
+
+    $config = ArrayUtils::merge_recursive_overwrite($cc, $config);
 
     // Set error reporting.
 
@@ -49,7 +53,7 @@ class HTTP {
     $error_handler = function($errno, $errstr, $errfile, $errline) {
       error_log("Wigwam error: $errstr in $errfile on line $errline");
 
-      $msg = HTTP::$mode == HTTP::MODE_PRODUCTION
+      $msg = $this->config("mode") == HTTP::MODE_PRODUCTION
         ? "Something went wrong."
         : "$errstr in $errfile, $errline";
 
@@ -85,7 +89,7 @@ class HTTP {
         $error['line']
       ));
 
-      $msg = HTTP::$mode == HTTP::MODE_PRODUCTION
+      $msg = $this->config("mode") == HTTP::MODE_PRODUCTION
         ? "Something went wrong."
         : "$errstr in $errfile, $errline";
 
@@ -115,7 +119,7 @@ class HTTP {
 
     // Configure the three Slim application modes.
 
-    Slim::configureMode('production', function () {
+    Slim::configureMode(HTTP::MODE_PRODUCTION, function () {
       Slim::config(array(
         'debug'       => false,
         'log.enable'  => true,
@@ -123,7 +127,7 @@ class HTTP {
       ));
     });
 
-    Slim::configureMode('staging', function () {
+    Slim::configureMode(HTTP::MODE_STAGING, function () {
       Slim::config(array(
         'debug'       => false,
         'log.enable'  => true,
@@ -131,7 +135,7 @@ class HTTP {
       ));
     });
 
-    Slim::configureMode('development', function () {
+    Slim::configureMode(HTTP::MODE_DEV, function () {
       Slim::config(array(
         'debug'       => false,
         'log.enable'  => true,
