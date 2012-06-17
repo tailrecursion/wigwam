@@ -15,6 +15,8 @@ class HTTP {
   const         MODE_STAGING    = "staging";
   const         MODE_PRODUCTION = "production";
 
+  public static $mode;
+
   public        $err;
 
   private       $requestBodyParser;
@@ -43,7 +45,7 @@ class HTTP {
 
     $config = ArrayUtils::merge_recursive_overwrite($cc, $config);
 
-    // Set error reporting.
+    HTTP::$mode = $config['http.mode'];
 
     if (isset($config['error_reporting']))
       error_reporting($config['error_reporting']);
