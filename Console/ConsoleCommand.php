@@ -2,10 +2,32 @@
 
 use RuntimeException;
 use ReflectionClass;
+use ReflectionFunction;
 
 function showDocComment($dc) {
   $dc = preg_replace('/^  */m', ' ', $dc);
-  return strlen($dc) ? $dc : "No docs available.";
+  return strlen($dc) ? $dc : "/**\n * No doc comment.\n */";
+}
+
+function showMethodSignature($m) {
+  return !is_object($m) ? "" : $m->getName() . "(" .
+    implode(", ", array_reduce($m->getParameters(), function($xs, $x) {
+      $tmp = ($x->isArray() ? "array" : "mixed") . ' ' .
+        ($x->isPassedByReference() ? '&' : '') . '$' . $x->getName();
+      if ($x->isDefaultValueAvailable())
+        $tmp .= ("='" . $x->getDefaultValue() . "'");
+      if ($x->isOptional())
+        $tmp = "[$tmp]";
+      $xs[] = $tmp;
+      return $xs;
+    }, array())) .
+  ")";
+}
+
+function docForFunction($fn) {
+  $r = new ReflectionFunction($fn);
+  return showDocComment($r->getDocComment()) . "\n" .
+    showMethodSignature($r);
 }
 
 function docForClass($class) {
@@ -15,8 +37,15 @@ function docForClass($class) {
 
 function docForClassMethod($class, $v) {
   $r = new ReflectionClass($class);
-  $m = $r->getMethod($v);
-  return showDocComment($m->getDocComment());
+  switch($v) {
+    case "__construct":
+      $m = $r->getConstructor();
+      break;
+    default:
+      $m = $r->getMethod($v);
+  }
+  return showDocComment(is_object($m) ? $m->getDocComment() : "") . "\n" .
+    $class . "::" . showMethodSignature($m);
 }
 
 function docForClassProperty($class, $v) {
@@ -90,7 +119,9 @@ EOT;
   }
 
   public static function d($argline) {
-    $T_CLASS = ConsoleCommandCompletion::T_CLASS;
+    $T_PREFIX = ConsoleCommandCompletion::T_PREFIX;
+    $T_CLASS  = ConsoleCommandCompletion::T_CLASS;
+
     $c = new ConsoleCommandCompletion(true);
     $c->parseBuf($argline, $t, $v);
 
@@ -98,6 +129,13 @@ EOT;
       case array(T_STRING):
       case array($T_CLASS):
         error_log(docForClass($v[0]));
+        break;
+      case array(T_STRING, '(', ')'):
+        error_log(docForFunction($v[0]));
+        break;
+      case array($T_PREFIX, T_STRING):
+        error_log("hey class!");
+        error_log(docForClass(implode("\\", $v)));
         break;
       case array($T_CLASS, T_DOUBLE_COLON, T_STRING, '(', ')'):
         error_log(docForClassMethod($v[0], $v[2]));
