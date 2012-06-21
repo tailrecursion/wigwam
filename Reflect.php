@@ -45,10 +45,13 @@ class Reflect {
           'name'      => $method->getName(),
           'tags'      => $xthis->parseDoc((string) $method->getDocComment()),
           'params'    => array_map(function($param) {
-            return array(
+            $tmp = array(
               'name'      => $param->name,
               'optional'  => $param->isOptional()
             );
+            if ($param->isDefaultValueAvailable())
+              $tmp['default'] = $param->getDefaultValue();
+            return $tmp;
           }, $method->getParameters())
         ));
       }, $app->getMethods(ReflectionMethod::IS_STATIC)))
