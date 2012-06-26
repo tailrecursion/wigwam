@@ -81,9 +81,9 @@ class Reflect {
 
   public function parseDocTag($tok) {
     $name   = preg_replace('/\(.*/', '', $tok);
-    $argstr = preg_split('/,/', preg_replace('/^.*\((.*)\).*$/', '\1', $tok));
+    $argstr = preg_split('/,/', preg_replace('/^.*\((.*)\).*$/', '$1', $tok));
 
-    $args = $name == $tok ? array() : array_values(array_map(function($arg) {
+    $args = ($name == $tok) ? array() : array_values(array_map(function($arg) {
       return preg_replace('/^\$/', '', $arg);
     }, array_filter($argstr)));
 
@@ -97,6 +97,7 @@ class Reflect {
 
     if ($method == 'getApi') return $this->getApi();
 
+    // The method's API specification.
     $meth = array_reduce($api['methods'], function($acc, $e) use ($method) {
       return !$acc && $e['name'] == $method ? $e : $acc;
     });
@@ -104,6 +105,7 @@ class Reflect {
     if (!$meth)
       throw new BadArgument("Method not found: $method");
 
+    // The argument list for the method that will be called.
     $args = array_map(function($spec) use ($params) {
       if (!array_key_exists($spec['name'], $params))
         throw new BadArgument("Missing non-optional arg: ".$spec['name']);
