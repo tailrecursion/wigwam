@@ -120,13 +120,14 @@ function getExceptionDefs() {
               : argv[i];
           });
 
-          return function(success, error, sync) {
+          return function(success, error, complete, sync) {
             return Wigwam.ajax(
               method.verb,
               method.route,
               data,
               success,
               error,
+              complete,
               !sync
             );
           };
@@ -139,6 +140,7 @@ function getExceptionDefs() {
           doAsync.apply(window, argv)(
             function(data) { ret = data },
             function(err) { ex = err },
+            function() {},
             true
           );
 
@@ -165,7 +167,7 @@ function getExceptionDefs() {
 
     cfg: getConf(),
 
-    ajax: function(method, url, data, callback, errcallback, async) {
+    ajax: function(method, url, data, callback, errcallback, complete, async) {
       var argv = Array.prototype.slice.call(arguments), process, opt;
 
       if ((method = method.toUpperCase()) == 'GET' || method == 'POST')
@@ -205,7 +207,8 @@ function getExceptionDefs() {
           } else if ($.isFunction(errcallback)) {
             errcallback(e);
           }
-        }
+        },
+        complete: complete
       };
 
       if (!process)
