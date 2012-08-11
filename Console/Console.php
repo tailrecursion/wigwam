@@ -8,6 +8,7 @@ use \RuntimeException;
 class Console {
  
   /** Current prompt. */
+  public static $n          = 0;
   public static $PS1        = 'php> ';
   public static $PS2        = '  *> ';
   public static $HISTSIZE   = 1000;
@@ -240,7 +241,7 @@ class Console {
     $line = ConsoleCommand::doit($line);
 
     if ($line && static::$printnext && static::printableLine($line))
-      $line = 'printf("=> %s\n", var_export('.$line.', true))';
+      $line = 'printf("\$_'.++static::$n.' => %s\n", var_export($GLOBALS["_"] = $GLOBALS["_'.static::$n.'"] = '.$line.', true))';
     $line .= ';';
 
     static::$printnext = static::$print;
