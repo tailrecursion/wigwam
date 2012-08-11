@@ -57,7 +57,7 @@ use Wigwam\Console\Console;
 use Wigwam\Console\ConsoleCommand;
 
 if (! class_exists('Wigwam\\ClassLoader'))
-  require_once(__DIR__.'/../ClassLoader.php');
+  require_once('Wigwam/ClassLoader.php');
 
 Console::setup();
 
