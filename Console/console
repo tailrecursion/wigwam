@@ -1,7 +1,56 @@
 <?php
 // vim: ft=php
 
+// Parse .htaccess files
+
+$init = function() {
+  $setini = function($line) {
+    $patt  = '/^\s*php_(?:admin_)?value\s+([^\s]+)\s+([^\s].*)$/';
+
+    if (! preg_match($patt, trim($line), $m))
+      return;
+
+    $k = $m[1];
+    $v = $m[2];
+
+    if ($v[0] == '"' && $v[strlen($v)-1] == '"')
+      $v = substr($v, 1, strlen($v)-2);
+
+    ini_set($k, $v);
+  };
+
+  $option = getopt('f:i:v:hHqz');
+  $depth  = count(explode("/", getcwd())) - 1;
+
+  if (! isset($option['H'])) {
+    for ($i=0; $i<$depth; $i++) {
+      $file = str_repeat("../", $i).".htaccess";
+
+      if (! file_exists($file))
+        continue;
+
+      $lines = file($file);
+
+      foreach ($lines as $line)
+        $setini($line);
+    }
+  }
+
+  if (isset($option['i'])) {
+    if (! is_array($option['i']))
+      $option['i'] = array($option['i']);
+    foreach($option['i'] as $set)
+      $setini(preg_replace('/^([^=]+)=/', 'php_value $1 ', $set));
+  }
+};
+
+$init();
+
+unset($init);
+
 ini_set('error_log', '');
+
+putenv('WIGWAM_CONSOLE=true');
 
 use Wigwam\ClassLoader;
 use Wigwam\Console\Console;
@@ -12,7 +61,7 @@ if (! class_exists('Wigwam\\ClassLoader'))
 
 Console::setup();
 
-Console::$option = getopt('f:v:hqz');
+Console::$option = getopt('f:i:v:hHqz');
 
 if (isset(Console::$option['h'])) {
   ConsoleCommand::h('');

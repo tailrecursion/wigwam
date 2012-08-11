@@ -92,11 +92,15 @@ Usage: $name [OPTIONS]
 
 Where OPTIONS are:
 
+  -f <file>     Require <file> before starting REPL.
   -h            Print usage info and exit.
+  -H            Don't parse .htaccess files at startup.
+  -i <var=val>  Set PHP configuration option "var" to "val".
   -q            Don't echo the result after evaling each expression.
-  -z            Run script files but don't start interactive REPL.
-  -f <file>     Require() <file> prior to starting REPL.
   -v <var=val>  Set \$var to "val" globally.
+  -z            Run script files but don't start interactive REPL.
+
+Multiple -f, -i, and -v options may be specified on the same command line.
 
 The following commands are available inside the REPL environment:
 

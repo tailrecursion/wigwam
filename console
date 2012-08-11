@@ -2,4 +2,6 @@
 <?php
 // vim: ft=php
 
+ini_set('error_log', '');
+
 require_once(__DIR__."/Console/console");
