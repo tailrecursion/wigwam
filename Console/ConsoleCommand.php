@@ -96,6 +96,8 @@ Where OPTIONS are:
   -h            Print usage info and exit.
   -H            Don't parse .htaccess files at startup.
   -i <var=val>  Set PHP configuration option "var" to "val".
+  -j <prefix>   Prefix for PHP history globals (default is "_").
+  -J            Disable PHP history globals.
   -q            Don't echo the result after evaling each expression.
   -v <var=val>  Set \$var to "val" globally.
   -z            Run script files but don't start interactive REPL.

@@ -19,7 +19,7 @@ $init = function() {
     ini_set($k, $v);
   };
 
-  $option = getopt('f:i:v:hHqz');
+  $option = getopt('f:i:j:Jv:hHqz');
   $depth  = count(explode("/", getcwd())) - 1;
 
   if (! isset($option['H'])) {
@@ -61,11 +61,20 @@ if (! class_exists('Wigwam\\ClassLoader'))
 
 Console::setup();
 
-Console::$option = getopt('f:i:v:hHqz');
+Console::$option = getopt('f:i:j:Jv:hHqz');
 
 if (isset(Console::$option['h'])) {
   ConsoleCommand::h('');
   exit();
+}
+
+if (isset(Console::$option['J']))
+  Console::$HISTORY = false;
+
+if (isset(Console::$option['j'])) {
+  if (is_array(Console::$option['j']))
+    Console::$option['j'] = array_pop(Console::$option['j']);
+  Console::$HISTPREFIX = Console::$option['j'];
 }
 
 if (isset(Console::$option['v'])) {

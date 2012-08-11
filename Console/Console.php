@@ -11,6 +11,8 @@ class Console {
   public static $n          = 0;
   public static $PS1        = 'php> ';
   public static $PS2        = '  *> ';
+  public static $HISTORY    = true;
+  public static $HISTPREFIX = "_";
   public static $HISTSIZE   = 1000;
   public static $DEBUG      = false;
 
@@ -237,11 +239,19 @@ class Console {
   }
 
   public static function getLine() {
-    $line = preg_replace('/;$/', '', static::readSock(0, 1));
-    $line = ConsoleCommand::doit($line);
+    $line   = preg_replace('/;$/', '', static::readSock(0, 1));
+    $line   = ConsoleCommand::doit($line);
+    $hp     = static::$HISTPREFIX;
+    $hn     = ++static::$n;
+    $hv     = "{$hp}{$hn}";
+    $hl     = '$GLOBALS["'.$hp.'"] = $GLOBALS["'.$hv.'"] = ';
+
+    $prompt = static::$HISTORY ? "\\\$$hv " : "";
+    $expr   = (static::$HISTORY ? $hl : "").$line;
 
     if ($line && static::$printnext && static::printableLine($line))
-      $line = 'printf("\$_'.++static::$n.' => %s\n", var_export($GLOBALS["_"] = $GLOBALS["_'.static::$n.'"] = '.$line.', true))';
+      $line = 'printf("'.$prompt.'=> %s\n", var_export('.$expr.', true))';
+
     $line .= ';';
 
     static::$printnext = static::$print;
