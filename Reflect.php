@@ -40,7 +40,7 @@ class Reflect {
 
     return $this->api ? $this->api : $this->api = array(
       'name'      => $app->getName(),
-      'methods'   => array_values(array_map(function($method) use ($xthis) {
+      'methods'   => array_filter(array_values(array_map(function($method) use ($xthis) {
         return $method->isPublic()
           ? $xthis->runParseHandlers(array(
               'name'      => $method->getName(),
@@ -56,7 +56,7 @@ class Reflect {
               }, $method->getParameters())
             ))
           : false;
-      }, $app->getMethods(ReflectionMethod::IS_STATIC)))
+      }, $app->getMethods(ReflectionMethod::IS_STATIC))))
     );
   }
 
