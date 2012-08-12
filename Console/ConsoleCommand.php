@@ -15,7 +15,7 @@ function showMethodSignature($m) {
       $tmp = ($x->isArray() ? "array" : "mixed") . ' ' .
         ($x->isPassedByReference() ? '&' : '') . '$' . $x->getName();
       if ($x->isDefaultValueAvailable())
-        $tmp .= ("='" . $x->getDefaultValue() . "'");
+        $tmp .= ("=" . var_export($x->getDefaultValue(),true));
       if ($x->isOptional())
         $tmp = "[$tmp]";
       $xs[] = $tmp;
