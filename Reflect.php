@@ -41,19 +41,21 @@ class Reflect {
     return $this->api ? $this->api : $this->api = array(
       'name'      => $app->getName(),
       'methods'   => array_values(array_map(function($method) use ($xthis) {
-        return $xthis->runParseHandlers(array(
-          'name'      => $method->getName(),
-          'tags'      => $xthis->parseDoc((string) $method->getDocComment()),
-          'params'    => array_map(function($param) {
-            $tmp = array(
-              'name'      => $param->name,
-              'optional'  => $param->isOptional()
-            );
-            if ($param->isDefaultValueAvailable())
-              $tmp['default'] = $param->getDefaultValue();
-            return $tmp;
-          }, $method->getParameters())
-        ));
+        return $method->isPublic()
+          ? $xthis->runParseHandlers(array(
+              'name'      => $method->getName(),
+              'tags'      => $xthis->parseDoc((string) $method->getDocComment()),
+              'params'    => array_map(function($param) {
+                $tmp = array(
+                  'name'      => $param->name,
+                  'optional'  => $param->isOptional()
+                );
+                if ($param->isDefaultValueAvailable())
+                  $tmp['default'] = $param->getDefaultValue();
+                return $tmp;
+              }, $method->getParameters())
+            ))
+          : false;
       }, $app->getMethods(ReflectionMethod::IS_STATIC)))
     );
   }
