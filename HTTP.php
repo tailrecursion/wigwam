@@ -55,15 +55,11 @@ class HTTP {
     $error_handler = function($errno, $errstr, $errfile, $errline) {
       error_log("Wigwam error: $errstr in $errfile on line $errline");
 
-      $msg = $this->config("mode") == HTTP::MODE_PRODUCTION
-        ? "Something went wrong."
-        : "$errstr in $errfile, $errline";
-
       header("HTTP/1.1 500 Server Error");
       header("Content-Type: application/json");
       echo json_encode(array(
         'exception'   => 'Wigwam\\FatalException',
-        'message'     => $msg,
+        'message'     => 'Something went wrong.',
       ));
       die();
     };
@@ -91,15 +87,11 @@ class HTTP {
         $error['line']
       ));
 
-      $msg = $this->config("mode") == HTTP::MODE_PRODUCTION
-        ? "Something went wrong."
-        : "$errstr in $errfile, $errline";
-
       header("HTTP/1.1 500 Server Error");
       header("Content-Type: application/json");
       echo json_encode(array(
         'exception'   => 'Wigwam\\FatalException',
-        'message'     => $msg,
+        'message'     => 'Something went wrong.',
       ));
       die();
     };
