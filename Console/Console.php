@@ -9,7 +9,7 @@ class Console {
  
   /** Current prompt. */
   public static $n          = 0;
-  public static $PS1        = 'php> ';
+  public static $PS1        = "\033[1mPHP>\033[37m\033[0m ";
   public static $PS2        = '  *> ';
   public static $HISTORY    = true;
   public static $HISTPREFIX = "_";
@@ -250,9 +250,9 @@ class Console {
     $expr   = (static::$HISTORY ? $hl : "").$line;
 
     if ($line && static::$printnext && static::printableLine($line))
-      $line = 'printf("'.$prompt.'=> %s\n", var_export('.$expr.', true))';
+      $line = 'print("\033[0m");printf("\033[33m%s\n\033[0m// %d\n", var_export('.$expr.', true), '.$hn.')';
 
-    $line .= ';';
+    $line = 'print("\033[31;1m");'."{$line};".'print("\033[0m");';
 
     static::$printnext = static::$print;
 
