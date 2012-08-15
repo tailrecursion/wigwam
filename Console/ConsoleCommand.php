@@ -92,6 +92,8 @@ Usage: $name [OPTIONS]
 
 Where OPTIONS are:
 
+  -c <color>    Return value print color (default is "cyan").
+                [black, red, green, yellow, blue, magenta, cyan, white]
   -f <file>     Require <file> before starting REPL.
   -h            Print usage info and exit.
   -H            Don't parse .htaccess files at startup.

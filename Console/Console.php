@@ -7,10 +7,23 @@ use \RuntimeException;
  */
 class Console {
  
+  /* ANSI terminal color escape */
+  public static $colors = array(
+    "black"   => 30,
+    "red"     => 31,
+    "green"   => 32,
+    "yellow"  => 33,
+    "blue"    => 34,
+    "magenta" => 35,
+    "cyan"    => 36,
+    "white"   => 37,
+  );
+
   /** Current prompt. */
   public static $n          = 0;
   public static $PS1        = "\033[1mPHP>\033[37m\033[0m ";
   public static $PS2        = '  *> ';
+  public static $OUTCOLOR   = 36;
   public static $HISTORY    = true;
   public static $HISTPREFIX = "_";
   public static $HISTSIZE   = 1000;
@@ -245,14 +258,15 @@ class Console {
     $hn     = ++static::$n;
     $hv     = "{$hp}{$hn}";
     $hl     = '$GLOBALS["'.$hp.'"] = $GLOBALS["'.$hv.'"] = ';
+    $hc     = static::$OUTCOLOR;
 
     $prompt = static::$HISTORY ? "\\\$$hv " : "";
     $expr   = (static::$HISTORY ? $hl : "").$line;
 
     if ($line && static::$printnext && static::printableLine($line))
-      $line = 'print("\033[0m");printf("\033[33m%s\n\033[0m// %d\n", var_export('.$expr.', true), '.$hn.')';
+      $line = 'printf("\033['.$hc.'m%s\n\033[0m// %d\n", var_export('.$expr.', true), '.$hn.')';
 
-    $line = 'print("\033[31;1m");'."{$line};".'print("\033[0m");';
+    $line .= ';';
 
     static::$printnext = static::$print;
 
