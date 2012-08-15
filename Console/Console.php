@@ -264,7 +264,7 @@ class Console {
     $expr   = (static::$HISTORY ? $hl : "").$line;
 
     if ($line && static::$printnext && static::printableLine($line))
-      $line = 'printf("\033['.$hc.'m%s\n\033[0m// %d\n", var_export('.$expr.', true), '.$hn.')';
+      $line = 'printf("\033['.$hc.'m%s\n\033[0;1m// %d\033[0m\n", var_export('.$expr.', true), '.$hn.')';
 
     $line .= ';';
 
