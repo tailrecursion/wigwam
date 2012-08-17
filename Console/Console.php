@@ -104,7 +104,11 @@ class Console {
     static::$argv       = $argv;
 
     readline_read_history(static::getHistFile());
-    system("> ".escapeshellarg(static::$HISTFILE_S));
+
+    if (is_writable(dirname(static::$HISTFILE_S)))
+      system("> ".escapeshellarg(static::$HISTFILE_S));
+    else
+      static::$HISTFILE_S = false;
 
     register_shutdown_function(function() {
       if ($e = error_get_last())
@@ -209,7 +213,8 @@ class Console {
   }
 
   public static function updateHistFile($line) {
-    system("echo ".escapeshellarg($line)." >> ".escapeshellarg(static::$HISTFILE_S));
+    if (static::$HISTFILE_S)
+      system("echo ".escapeshellarg($line)." >> ".escapeshellarg(static::$HISTFILE_S));
     readline_add_history($line);
     static::writeHistFile();
   }
