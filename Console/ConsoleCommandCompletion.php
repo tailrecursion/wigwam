@@ -184,6 +184,8 @@ class ConsoleCommandCompletion {
   }
 
   private function matchClassStaticVar($class, $v) {
+    if (! class_exists($class))
+      return array();
     $r      = new ReflectionClass($class);
     $xthis  = $this;
     $m = array_filter(array_map(function($x) use ($xthis) {
@@ -216,6 +218,8 @@ class ConsoleCommandCompletion {
 
   private function matchClassConst($class, $v) {
     $c = preg_replace('/^.*\\\\/', '', $class);
+    if (! class_exists($class))
+      return array();
     $r = new ReflectionClass($class);
     $m = array_keys($r->getConstants());
 
@@ -228,6 +232,8 @@ class ConsoleCommandCompletion {
 
   private function matchStaticMethod($class, $v) {
     $c      = preg_replace('/^.*\\\\/', '', $class);
+    if (! class_exists($class))
+      return array();
     $r      = new ReflectionClass($class);
     $xthis  = $this;
 
