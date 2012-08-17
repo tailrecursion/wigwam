@@ -101,6 +101,7 @@ Where OPTIONS are:
   -j <prefix>   Prefix for PHP history globals (default is "_").
   -J            Disable PHP history globals.
   -q            Don't echo the result after evaling each expression.
+  -s <file>     Run console commands in <file> before interactive REPL.
   -v <var=val>  Set \$var to "val" globally.
   -z            Run script files but don't start interactive REPL.
 
@@ -108,12 +109,15 @@ Multiple -f, -i, and -v options may be specified on the same command line.
 
 The following commands are available inside the REPL environment:
 
-  /h            Print usage info.
-  /pp           Toggle echoing the result of each eval.
-  /p <expr>     Toggle echoing the result just for this expression.
-  /q <expr>     Disable echoing the result of this expression.
-  /f <file>     Require() <file>.
   /d <thing>    Get the doc comment for the <thing>.
+  /e [file]     Append session history to <file> and open in editor. If <file>
+                is not specified then the file specified with the -s option
+                will be used.
+  /f <file>     Require() <file>.
+  /h            Print usage info.
+  /p <expr>     Toggle echoing the result just for this expression.
+  /pp           Toggle echoing the result of each eval.
+  /q <expr>     Disable echoing the result of this expression.
 
 EOT;
 
@@ -142,7 +146,6 @@ EOT;
         error_log(docForFunction($v[0]));
         break;
       case array($T_PREFIX, T_STRING):
-        error_log("hey class!");
         error_log(docForClass(implode("\\", $v)));
         break;
       case array($T_CLASS, T_DOUBLE_COLON, T_STRING, '(', ')'):
@@ -156,6 +159,40 @@ EOT;
     }
 
     return '';
+  }
+
+  public static function e($argline) {
+    if (! $argline && isset(Console::$option['s']))
+      $argline = Console::$option['s'];
+
+    if (! $argline) {
+      echo "No file to edit.\n";
+      return;
+    }
+
+    $tmpf   = tempnam(sys_get_temp_dir(), "console");
+    $tf     = escapeshellarg($tmpf);
+    $hf     = escapeshellarg(Console::$HISTFILE_S);
+    $sf     = escapeshellarg($argline);
+    $editor = getenv("EDITOR") ? getenv("EDITOR") : "vi";
+
+    system("touch $sf");
+    system("touch $tf");
+    system("cp $sf $tf");
+    system("cat $hf |grep -v '^/' >> $tf");
+
+    passthru("$editor $tf");
+
+    echo "Save to $sf? [y/N] ";
+    $resp = chop(fgets(STDIN));
+
+    if (preg_match('/y(es)?/i', $resp)) {
+      system("mv $tf $sf");
+      echo "Saved.\n";
+    } else
+      echo "Discarded.\n";
+
+    system("rm -f $tf");
   }
 
 }

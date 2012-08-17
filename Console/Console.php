@@ -24,9 +24,14 @@ class Console {
   public static $PS1        = "\033[1mPHP>\033[37m\033[0m ";
   public static $PS2        = '  *> ';
   public static $OUTCOLOR   = 36;
+
   public static $HISTORY    = true;
   public static $HISTPREFIX = "_";
   public static $HISTSIZE   = 1000;
+
+  public static $HISTFILE_S = "";
+  public static $RUNSCRIPT  = array();
+
   public static $DEBUG      = false;
 
   public static $getopt     = "f:q";
@@ -99,6 +104,7 @@ class Console {
     static::$argv       = $argv;
 
     readline_read_history(static::getHistFile());
+    system("> ".escapeshellarg(static::$HISTFILE_S));
 
     register_shutdown_function(function() {
       if ($e = error_get_last())
@@ -203,6 +209,7 @@ class Console {
   }
 
   public static function updateHistFile($line) {
+    system("echo ".escapeshellarg($line)." >> ".escapeshellarg(static::$HISTFILE_S));
     readline_add_history($line);
     static::writeHistFile();
   }
@@ -248,7 +255,10 @@ class Console {
   }
 
   public static function readLine() {
-    static::writeSock(0, 0, static::doReadline(static::$PS1));
+    $line   = count(static::$RUNSCRIPT)
+                ? array_shift(static::$RUNSCRIPT)
+                : static::doReadline(static::$PS1);
+    static::writeSock(0, 0, $line);
   }
 
   public static function getLine() {

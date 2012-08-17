@@ -1,6 +1,7 @@
 <?php
 // vim: ft=php
 
+error_reporting(0);
 // Parse .htaccess files
 
 $init = function() {
@@ -19,7 +20,7 @@ $init = function() {
     ini_set($k, $v);
   };
 
-  $option = getopt('c:f:i:j:Jv:hHqz');
+  $option = getopt('c:f:i:j:Jv:hHqs:z');
   $depth  = count(explode("/", getcwd())) - 1;
 
   if (! isset($option['H'])) {
@@ -59,9 +60,11 @@ use Wigwam\Console\ConsoleCommand;
 if (! class_exists('Wigwam\\ClassLoader'))
   require_once('Wigwam/ClassLoader.php');
 
+Console::$HISTFILE_S = $_SERVER['HOME']."/.console.php.history.session";
+
 Console::setup();
 
-Console::$option = getopt('c:f:i:j:Jv:hHqz');
+Console::$option = getopt('c:f:i:j:Jv:hHqs:z');
 
 if (isset(Console::$option['h'])) {
   ConsoleCommand::h('');
@@ -70,6 +73,13 @@ if (isset(Console::$option['h'])) {
 
 if (isset(Console::$option['J']))
   Console::$HISTORY = false;
+
+if (isset(Console::$option['s'])) {
+  if (is_array(Console::$option['s']))
+    Console::$option['s'] = array_pop(Console::$option['s']);
+  if (file_exists(Console::$option['s']))
+    Console::$RUNSCRIPT = file(Console::$option['s']);
+}
 
 if (isset(Console::$option['c'])) {
   if (is_array(Console::$option['c']))
