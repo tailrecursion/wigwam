@@ -99,8 +99,16 @@ class Console {
     T_VARIABLE,
   );
 
+  public static function color($color="none") {
+    $color = $color == "none" ? 0 : static::$colors[$color];
+    if (static::$OUTCOLOR != -1)
+      printf("\033[{$color}m");
+  }
+
   public static function printFatal($e) {
+    Console::color("red");
     error_log("ERROR: {$e['message']}\nIn {$e['file']} line {$e['line']}");
+    Console::color();
   }
 
   public static function setup() {
@@ -119,19 +127,25 @@ class Console {
       static::$HISTFILE_S = false;
 
     register_shutdown_function(function() {
+      Console::color("red");
       if ($e = error_get_last())
         error_log("ERROR: {$e['message']}\nIn {$e['file']} line {$e['line']}");
+      Console::color();
       die();
     });
 
     set_error_handler(function ($errno, $errstr, $errfile, $errline) {
+      Console::color("red");
       error_log("ERROR: $errstr\nIn $errfile line $errline");
+      Console::color();
       die();
     });
 
     set_exception_handler(function($e) {
+      Console::color("red");
       printf("%s: %s\nIn %s line %s\n",
         get_class($e), $e->getMessage(), $e->getFile(), $e->getLine());
+      Console::color();
       die();
     });
 
