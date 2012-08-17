@@ -255,9 +255,11 @@ class Console {
   }
 
   public static function readLine() {
-    $line   = count(static::$RUNSCRIPT)
-                ? array_shift(static::$RUNSCRIPT)
-                : static::doReadline(static::$PS1);
+    if (count(static::$RUNSCRIPT)) {
+      $line = array_shift(static::$RUNSCRIPT);
+      echo static::$PS1."$line";
+    } else
+      $line = static::doReadline(static::$PS1);
     static::writeSock(0, 0, $line);
   }
 
