@@ -9,6 +9,7 @@ class Console {
  
   /* ANSI terminal color escape */
   public static $colors = array(
+    "none"    => -1,
     "black"   => 30,
     "red"     => 31,
     "green"   => 32,
@@ -19,34 +20,41 @@ class Console {
     "white"   => 37,
   );
 
+  public static $PS1_COLOR    = "\033[1mPHP>\033[37m\033[0m ";
+
   /** Current prompt. */
-  public static $n          = 0;
-  public static $PS1        = "\033[1mPHP>\033[37m\033[0m ";
-  public static $PS2        = '  *> ';
-  public static $OUTCOLOR   = 36;
+  public static $n            = 0;
+  public static $PS1          = "PHP> ";
+  public static $PS2          = '  *> ';
+  public static $OUTCOLOR     = 36;
 
-  public static $HISTORY    = true;
-  public static $HISTPREFIX = "_";
-  public static $HISTSIZE   = 1000;
+  public static $INTERACTIVE  = true;
 
-  public static $HISTFILE_S = "";
-  public static $RUNSCRIPT  = array();
+  public static $HISTORY      = true;
+  public static $HISTPREFIX   = "_";
+  public static $HISTSIZE     = 1000;
 
-  public static $DEBUG      = false;
+  public static $HISTFILE_S   = "";
+  public static $SCRIPTFILE   = "";
+  public static $RUNSCRIPT    = array();
 
-  public static $getopt     = "f:q";
-  public static $option     = array();
+  public static $DEBUG        = false;
 
-  public static $print      = true;
-  public static $printnext  = true;
+  public static $getopt       = "f:q";
+  public static $option       = array();
 
-  public static $sock       = array();
-  public static $reboot     = false;
+  public static $print        = true;
+  public static $printnext    = true;
+
+  public static $sock         = array();
+  public static $reboot       = false;
   public static $pid1;
   public static $pid2;
   public static $pid3;
   public static $status;
   public static $tmp;
+
+  public static $completion_error;
 
   public static $argv;
 
@@ -269,7 +277,9 @@ class Console {
   }
 
   public static function getLine() {
-    $line   = preg_replace('/;$/', '', static::readSock(0, 1));
+    $line = preg_replace('/;$/', '', static::readSock(0, 1));
+    if (static::$completion_error)
+      $line = " ";
     $line   = ConsoleCommand::doit($line);
     $hp     = static::$HISTPREFIX;
     $hn     = ++static::$n;
@@ -277,11 +287,12 @@ class Console {
     $hl     = '$GLOBALS["'.$hp.'"] = $GLOBALS["'.$hv.'"] = ';
     $hc     = static::$OUTCOLOR;
 
-    $prompt = static::$HISTORY ? "\\\$$hv " : "";
     $expr   = (static::$HISTORY ? $hl : "").$line;
 
     if ($line && static::$printnext && static::printableLine($line))
-      $line = 'printf("\033['.$hc.'m%s\n\033[0;1m// %d\033[0m\n", var_export('.$expr.', true), '.$hn.')';
+      $line = static::$OUTCOLOR == -1
+        ? 'printf("=> %s\n// %d\n", var_export('.$expr.', true), '.$hn.')'
+        : 'printf("\033['.$hc.'m%s\n\033[0;1m// %d\033[0m\n", var_export('.$expr.', true), '.$hn.')';
 
     $line .= ';';
 
@@ -315,11 +326,42 @@ class Console {
   }
 
   public static function serviceCompletionRequests() {
+    static::$completion_error = false;
+
+    if (! socket_create_pair(AF_UNIX, SOCK_STREAM, 0, $sock))
+      throw new RuntimeException("can't create socket pair");
+
+    socket_set_nonblock($sock[1]);
+
     while (($tmp = static::getCompletionReq()) != ':done:') {
-      $forceStatic = preg_match('/^\\/d /', $tmp);
-      $c = new ConsoleCommandCompletion($forceStatic);
-      static::sendCompletionResp($c->complete($tmp));
+      $pid = pcntl_fork();
+
+      if (! $pid) {
+        // child
+
+        $forceStatic = preg_match('/^\\/d /', $tmp);
+        $c = new ConsoleCommandCompletion($forceStatic);
+        static::sendCompletionResp($c->complete($tmp));
+
+        if (socket_write($sock[0], "ok") === false)
+          throw new RuntimeException("can't write to socket");
+
+        exit();
+      } else {
+        // parent
+
+        pcntl_waitpid($pid, $status, WUNTRACED);
+
+        $buf = socket_read($sock[1], 8192, PHP_BINARY_READ);
+
+        if ($buf != "ok") {
+          static::$completion_error = true;
+          //static::endCompletions();
+          static::sendCompletionResp("ERROR");
+        }
+      }
     }
+
   }
 
   public static function endCompletions() {

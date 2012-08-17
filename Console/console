@@ -60,6 +60,9 @@ use Wigwam\Console\ConsoleCommand;
 if (! class_exists('Wigwam\\ClassLoader'))
   require_once('Wigwam/ClassLoader.php');
 
+if (isset(Console::$option['z']))
+  Console::$INTERACTIVE = false;
+
 Console::$HISTFILE_S = $_SERVER['HOME']."/.console.php.history.session";
 
 Console::setup();
@@ -77,8 +80,10 @@ if (isset(Console::$option['J']))
 if (isset(Console::$option['s'])) {
   if (is_array(Console::$option['s']))
     Console::$option['s'] = array_pop(Console::$option['s']);
-  if (file_exists(Console::$option['s']))
-    Console::$RUNSCRIPT = file(Console::$option['s']);
+  if (file_exists(Console::$option['s'])) {
+    Console::$SCRIPTFILE  = Console::$option['s'];
+    Console::$RUNSCRIPT   = file(Console::$option['s']);
+  }
 }
 
 if (isset(Console::$option['c'])) {
@@ -86,6 +91,9 @@ if (isset(Console::$option['c'])) {
     Console::$option['c'] = array_pop(Console::$option['c']);
   Console::$OUTCOLOR = Console::$colors[Console::$option['c']];
 }
+
+if (Console::$OUTCOLOR != -1)
+  Console::$PS1 = Console::$PS1_COLOR;
 
 if (isset(Console::$option['j'])) {
   if (is_array(Console::$option['j']))
@@ -111,7 +119,7 @@ if (isset(Console::$option['f'])) {
     require_once(Console::$option['f']);
 }
 
-if (isset(Console::$option['z']))
+if (! Console::$INTERACTIVE)
   exit();
 
 Console::setup();

@@ -92,8 +92,9 @@ Usage: $name [OPTIONS]
 
 Where OPTIONS are:
 
-  -c <color>    Return value print color (default is "cyan").
-                [black, red, green, yellow, blue, magenta, cyan, white]
+  -c <color>    Return value print color (default is "cyan"). Choices are:
+                [black, red, green, yellow, blue, magenta, cyan, white, none]
+                Choose "none" to disable colored output.
   -f <file>     Require <file> before starting REPL.
   -h            Print usage info and exit.
   -H            Don't parse .htaccess files at startup.
@@ -162,8 +163,8 @@ EOT;
   }
 
   public static function e($argline) {
-    if (! $argline && isset(Console::$option['s']))
-      $argline = Console::$option['s'];
+    if (! $argline && Console::$SCRIPTFILE)
+      $argline = Console::$SCRIPTFILE;
 
     if (! $argline) {
       echo "No file to edit.\n";
