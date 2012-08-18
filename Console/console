@@ -136,7 +136,7 @@ if (Console::$pid1 > 0) {
   while(true) {
     Console::readLine();
     Console::endCompletions();
-    Console::getStatus();
+    Console::$n = Console::getStatus();
     if (Console::$reboot)
       break;
   }
@@ -154,7 +154,7 @@ if (Console::$pid1 > 0) {
     if (Console::$pid2 > 0) {
       // child
       pcntl_waitpid(Console::$pid2, Console::$status);
-      Console::sendStatus("ok");
+      Console::sendStatus(Console::$n);
     } else {
       // grandchild
       Console::$pid3 = posix_getpid();
@@ -172,7 +172,7 @@ if (Console::$pid1 > 0) {
         exit(0);
       }
 
-      Console::sendStatus("ok");
+      Console::sendStatus(Console::$n);
 
       posix_kill(posix_getppid(), SIGTERM);
       pcntl_signal_dispatch();

@@ -20,11 +20,11 @@ class Console {
     "white"   => 37,
   );
 
-  public static $PS1_COLOR    = "\033[1mPHP>\033[37m\033[0m ";
+  public static $PS1_COLOR    = "\033[32;1mphp\033[34m%s\033[0m> ";
 
   /** Current prompt. */
   public static $n            = 0;
-  public static $PS1          = "PHP> ";
+  public static $PS1          = "php%s> ";
   public static $PS2          = '  *> ';
   public static $OUTCOLOR     = 36;
 
@@ -98,6 +98,10 @@ class Console {
     T_UNSET_CAST,
     T_VARIABLE,
   );
+
+  public static function prompt() {
+    return sprintf(static::$PS1, static::$HISTORY ? ':'.(static::$n + 1) : '');
+  }
 
   public static function color($color="none") {
     $color = $color == "none" ? 0 : static::$colors[$color];
@@ -284,9 +288,9 @@ class Console {
   public static function readLine() {
     if (count(static::$RUNSCRIPT)) {
       $line = array_shift(static::$RUNSCRIPT);
-      echo static::$PS1."$line";
+      echo static::prompt()."$line";
     } else
-      $line = static::doReadline(static::$PS1);
+      $line = static::doReadline(static::prompt());
     static::writeSock(0, 0, $line);
   }
 
@@ -295,18 +299,21 @@ class Console {
     if (static::$completion_error)
       $line = " ";
     $line   = ConsoleCommand::doit($line);
-    $hp     = static::$HISTPREFIX;
-    $hn     = ++static::$n;
-    $hv     = "{$hp}{$hn}";
-    $hl     = '$GLOBALS["'.$hp.'"] = $GLOBALS["'.$hv.'"] = ';
     $hc     = static::$OUTCOLOR;
 
-    $expr   = (static::$HISTORY ? $hl : "").$line;
-
-    if ($line && static::$printnext && static::printableLine($line))
+    if ($line && static::$printnext && static::printableLine($line)) {
+      if (static::$HISTORY) {
+        $hp     = static::$HISTPREFIX;
+        $hn     = ++static::$n;
+        $hv     = "{$hp}{$hn}";
+        $hl     = '$GLOBALS["'.$hp.'"] = $GLOBALS["'.$hv.'"] = ';
+        $expr   = $hl.$line;
+      }
+      $expr = $line;
       $line = static::$OUTCOLOR == -1
-        ? 'printf("=> %s\n// %d\n", var_export('.$expr.', true), '.$hn.')'
-        : 'printf("\033['.$hc.'m%s\n\033[0;1m// %d\033[0m\n", var_export('.$expr.', true), '.$hn.')';
+        ? 'printf("=> %s\n", var_export('.$expr.', true))'
+        : 'printf("\033['.$hc.'m%s\n\033[0m", var_export('.$expr.', true))';
+    }
 
     $line .= ';';
 
