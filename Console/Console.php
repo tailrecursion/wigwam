@@ -52,9 +52,15 @@ class Console {
   public static $pid2;
   public static $pid3;
   public static $status;
+  
+  public static $line;
+  public static $result;
+  public static $no_result;
+
   public static $tmp;
 
   public static $completion_error;
+  public static $ignore_errors = false;
 
   public static $argv;
 
@@ -99,6 +105,11 @@ class Console {
     T_VARIABLE,
   );
 
+  public static function done() {
+    Console::$ignore_errors = true;
+    die();
+  }
+
   public static function prompt() {
     return sprintf(static::$PS1, static::$HISTORY ? ':'.(static::$n + 1) : '');
   }
@@ -109,10 +120,24 @@ class Console {
       printf("\033[{$color}m");
   }
 
-  public static function printFatal($e) {
+  public static function errMsg($message, $file, $line) {
+    return sprintf(
+      "PHP [%d]: %s\nIn %s line %d",
+      posix_getpid(),
+      $message,
+      $file,
+      $line
+    );
+  }
+
+  public static function printErr($message, $file, $line) {
     Console::color("red");
-    error_log("ERROR: {$e['message']}\nIn {$e['file']} line {$e['line']}");
+    error_log(static::errMsg($message, $file, $line));
     Console::color();
+  }
+
+  public static function printFatal($e) {
+    static::printErr($e['message'], $e['file'], $e['line']);
   }
 
   public static function setup() {
@@ -131,26 +156,23 @@ class Console {
       static::$HISTFILE_S = false;
 
     register_shutdown_function(function() {
-      Console::color("red");
-      if ($e = error_get_last())
-        error_log("ERROR: {$e['message']}\nIn {$e['file']} line {$e['line']}");
-      Console::color();
+      if (! Console::$ignore_errors && $e = error_get_last())
+        Console::printFatal($e);
       die();
     });
 
     set_error_handler(function ($errno, $errstr, $errfile, $errline) {
-      Console::color("red");
-      error_log("ERROR: $errstr\nIn $errfile line $errline");
-      Console::color();
-      die();
+      Console::printErr($errstr, $errfile, $errline);
+      Console::done();
     });
 
     set_exception_handler(function($e) {
-      Console::color("red");
-      printf("%s: %s\nIn %s line %s\n",
-        get_class($e), $e->getMessage(), $e->getFile(), $e->getLine());
-      Console::color();
-      die();
+      Console::printErr(
+        get_class($e).": ".$e->getMessage(),
+        $e->getFile(),
+        $e->getLine()
+      );
+      Console::done();
     });
 
     readline_completion_function(function($buf, $i) {
@@ -238,9 +260,13 @@ class Console {
       : false;
   }
 
+  public static function escapeHist($arg) {
+    return addcslashes(addcslashes(escapeshellarg($arg), "\r\n\t"), '\\');
+  }
+
   public static function updateHistFile($line) {
     if (static::$HISTFILE_S)
-      system("echo ".escapeshellarg($line)." >> ".escapeshellarg(static::$HISTFILE_S));
+      system("echo ".static::escapeHist($line)." >> ".static::escapeHist(static::$HISTFILE_S));
     readline_add_history($line);
     static::writeHistFile();
   }
@@ -295,31 +321,33 @@ class Console {
   }
 
   public static function getLine() {
-    $line = preg_replace('/;$/', '', static::readSock(0, 1));
+    $line   = preg_replace('/;$/', '', static::readSock(0, 1));
+
     if (static::$completion_error)
       $line = " ";
+
     $line   = ConsoleCommand::doit($line);
-    $hc     = static::$OUTCOLOR;
 
-    if ($line && static::$printnext && static::printableLine($line)) {
-      $expr = $line;
-      if (static::$HISTORY) {
-        $hp     = static::$HISTPREFIX;
-        $hn     = ++static::$n;
-        $hv     = "{$hp}{$hn}";
-        $hl     = '$GLOBALS["'.$hp.'"] = $GLOBALS["'.$hv.'"] = ';
-        $expr   = $hl.$line;
-      }
-      $line = static::$OUTCOLOR == -1
-        ? 'printf("=> %s\n", var_export('.$expr.', true))'
-        : 'printf("\033['.$hc.'m%s\n\033[0m", var_export('.$expr.', true))';
-    }
+    $line = 'Wigwam\Console\Console::$result = '
+      . (static::printableLine($line) 
+          ? ''
+          : 'Wigwam\Console\Console::$no_result; ')
+      . $line.';';
 
-    $line .= ';';
-
-    static::$printnext = static::$print;
+    static::$line = $line;
 
     return $line;
+  }
+
+  public static function printResult($res) {
+    if (static::$printnext)
+      printf(
+        ( ($hc = static::$OUTCOLOR) == -1 )
+          ? "=> %s\n"
+          : "\033[".$hc."m%s\033[0m\n", 
+        var_export($res, true)
+      );
+    static::$printnext = static::$print;
   }
 
   public static function getStatus() {
@@ -366,8 +394,8 @@ class Console {
 
         if (socket_write($sock[0], "ok") === false)
           throw new RuntimeException("can't write to socket");
-
-        exit();
+        
+        Console::done();
       } else {
         // parent
 

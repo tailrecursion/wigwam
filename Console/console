@@ -60,14 +60,17 @@ use Wigwam\Console\ConsoleCommand;
 if (! class_exists('Wigwam\\ClassLoader'))
   require_once('Wigwam/ClassLoader.php');
 
-if (isset(Console::$option['z']))
-  Console::$INTERACTIVE = false;
+// This is just a unique thing that will never be === to any result.
+Console::$no_result  = new DateTime('1900-01-01');
 
 Console::$HISTFILE_S = $_SERVER['HOME']."/.console.php.history.session";
 
 Console::setup();
 
 Console::$option = getopt('c:f:i:j:Jv:hHqs:z');
+
+if (isset(Console::$option['z']))
+  Console::$INTERACTIVE = false;
 
 if (isset(Console::$option['h'])) {
   ConsoleCommand::h('');
@@ -163,8 +166,17 @@ if (Console::$pid1 > 0) {
 
       pcntl_signal(SIGCHLD, SIG_IGN);
 
-      if (eval(Console::getLine()) === false)
+      if (eval(Console::getLine()) === false) {
         Console::printFatal(error_get_last());
+      } elseif (Console::$result !== Console::$no_result) {
+        if (Console::$HISTORY) {
+          ++Console::$n;
+          $GLOBALS[Console::$HISTPREFIX]
+            = $GLOBALS[Console::$HISTPREFIX.Console::$n]
+            = Console::$result;
+        }
+        Console::printResult(Console::$result);
+      }
 
       if (posix_getpid() != Console::$pid3) {
         // great-grandchild: could be here if eval'ed code called fork(), for
