@@ -302,6 +302,7 @@ class Console {
     $hc     = static::$OUTCOLOR;
 
     if ($line && static::$printnext && static::printableLine($line)) {
+      $expr = $line;
       if (static::$HISTORY) {
         $hp     = static::$HISTPREFIX;
         $hn     = ++static::$n;
@@ -309,7 +310,6 @@ class Console {
         $hl     = '$GLOBALS["'.$hp.'"] = $GLOBALS["'.$hv.'"] = ';
         $expr   = $hl.$line;
       }
-      $expr = $line;
       $line = static::$OUTCOLOR == -1
         ? 'printf("=> %s\n", var_export('.$expr.', true))'
         : 'printf("\033['.$hc.'m%s\n\033[0m", var_export('.$expr.', true))';
