@@ -61,6 +61,8 @@ class Console {
 
   public static $completion_error;
   public static $ignore_errors = false;
+  public static $print_before_error_message = "";
+  public static $print_after_error_message  = "";
 
   public static $argv;
 
@@ -122,11 +124,13 @@ class Console {
 
   public static function errMsg($message, $file, $line) {
     return sprintf(
-      "PHP [%d]: %s\nIn %s line %d",
+      "%sPHP [%d]: %s\nIn %s line %d%s",
+      Console::$print_before_error_message,
       posix_getpid(),
       $message,
       $file,
-      $line
+      $line,
+      Console::$print_after_error_message
     );
   }
 
@@ -387,6 +391,8 @@ class Console {
 
       if (! $pid) {
         // child
+
+        Console::$print_before_error_message = "\n";
 
         $forceStatic = preg_match('/^\\/d /', $tmp);
         $c = new ConsoleCommandCompletion($forceStatic);
