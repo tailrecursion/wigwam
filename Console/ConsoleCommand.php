@@ -4,6 +4,8 @@ use RuntimeException;
 use ReflectionClass;
 use ReflectionFunction;
 
+use Wigwam\ClassLoader;
+
 function showDocComment($dc) {
   $dc = preg_replace('/^  */m', ' ', $dc);
   return strlen($dc) ? $dc : "/**\n * No doc comment.\n */";
