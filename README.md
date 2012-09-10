@@ -15,7 +15,7 @@ This project contains (among other things) a [read-eval-print loop](http://en.wi
 7. Optional colored output.
 8. Can be extended easily.
 
-# Install
+### Install
 
 Assuming _/usr/local/lib/php_ is in your PHP include path, and _/usr/local/bin_
 is in your shell path, I'd do something like this:
@@ -27,7 +27,7 @@ $ cd Wigwam/Console
 $ ln -s `pwd`/console /usr/local/bin/console
 ```
 
-# Usage
+### Usage
 
 ```
 Usage: console [OPTIONS]
