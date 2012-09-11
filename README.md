@@ -1,3 +1,5 @@
+![PHP REPL](https://raw.github.com/micha/wigwam/master/php-repl.png)
+
 # The PHP REPL
 
 This project contains (among other things) a [read-eval-print loop](http://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop) (REPL) for the PHP language.
