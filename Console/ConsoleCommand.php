@@ -109,9 +109,11 @@ Where OPTIONS are:
   -v <var=val>  Set \$var to "val" globally.
   -z            Run script files but don't start interactive REPL.
 
-Multiple -f, -i, -p, and -v options may be specified on the same command line.
+  Multiple -f, -i, -p, and -v options may be specified on the same command line.
 
-The following commands are available inside the REPL environment:
+THE REPL ENVIRONMENT
+
+  The following commands are available inside the REPL environment:
 
   /d <thing>    Get the doc comment for the <thing>.
   /e [file]     Append session history to <file> and open in editor. If <file>
@@ -122,6 +124,19 @@ The following commands are available inside the REPL environment:
   /p <expr>     Toggle echoing the result just for this expression.
   /pp           Toggle echoing the result of each eval.
   /q <expr>     Disable echoing the result of this expression.
+
+  Console history globals:
+
+  If PHP history globals are enabled (i.e. the -J option is not specified),
+  the expressions evaluated by the repl are numbered, starting from 1. The
+  current expression number is displayed in the prompt. The result of the
+  expression is recorded in a global variable named \$_<num>, where <num> is
+  the expression number. Additionally, the result of the previous expression
+  is always assigned to \$_.
+
+  If the underscore-prefixed history globals clobber something in your
+  environment, you can change the prefix to something else using the -j option,
+  or you can disable them completely with -J.
 
 EOT;
 
