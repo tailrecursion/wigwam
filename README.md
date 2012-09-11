@@ -12,6 +12,7 @@ This project contains (among other things) a [read-eval-print loop](http://en.wi
 4. Can be configured via .htaccess files.
 5. Has history support via readline, and in-REPL result history variables.
 6. In-REPL tab completion and documentation for everything.
+7. Deals correctly with PHP statements vs. expressions.
 7. Optional colored output.
 8. Can be extended easily.
 
