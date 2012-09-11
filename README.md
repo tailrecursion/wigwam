@@ -61,7 +61,7 @@ Where OPTIONS are:
   -p <file>     Require <file> before loading console's classloader.
   -q            Don't echo the result after evaling each expression.
   -s <file>     Run console commands in <file> before interactive REPL.
-  -v <var=val>  Set \$var to "val" globally.
+  -v <var=val>  Set $var to "val" globally.
   -z            Run script files but don't start interactive REPL.
 
   Multiple -f, -i, -p, and -v options may be specified on the same command line.
@@ -85,9 +85,9 @@ THE REPL ENVIRONMENT
   If PHP history globals are enabled (i.e. the -J option is not specified),
   the expressions evaluated by the repl are numbered, starting from 1. The
   current expression number is displayed in the prompt. The result of the
-  expression is recorded in a global variable named \$_<num>, where <num> is
+  expression is recorded in a global variable named $_<num>, where <num> is
   the expression number. Additionally, the result of the previous expression
-  is always assigned to \$_.
+  is always assigned to $_.
 
   If the underscore-prefixed history globals clobber something in your
   environment, you can change the prefix to something else using the -j option,
