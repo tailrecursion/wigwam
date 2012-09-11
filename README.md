@@ -32,7 +32,7 @@ is in your shell path, I'd do something like this:
 ```bash
 $ cd /usr/local/lib/php
 $ git clone git://github.com/micha/wigwam.git Wigwam
-$ cd Wigwam/Console
+$ cd Wigwam
 $ ln -s `pwd`/console /usr/local/bin/console
 ```
 
