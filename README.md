@@ -20,7 +20,7 @@ This project contains (among other things) a [read-eval-print loop](http://en.wi
 ### Caveats
 
 The REPL was designed to work with the [Wigwam classloader](https://github.com/micha/wigwam/blob/master/ClassLoader.php). The `-p` command line option allows the inclusion of other
-classloaders prior to loading the Wigwam classloader, but tab-completion may
+classloaders prior to loading the Wigwam classloader, but tab completion may
 not work for those classes. Once the class has been loaded, however, tab
 completion should work fine.
 
