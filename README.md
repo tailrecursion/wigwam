@@ -6,14 +6,12 @@ This project contains (among other things) a [read-eval-print loop](http://en.wi
 
 ### Features
 
-1. Executes expressions in the global scope so global variables are accessible.
-2. Requires no local or global variables, so there is no chance that it will
-   clobber anything.
-3. Handles all types of errors and exceptions: the REPL does not die on fatal
-   errors, for example.
+1. Evaluates expressions in the global scope so global variables are accessible.
+2. Requires no local or global variables; won't clobber anything.
+3. Handles all types of errors and exceptions without exiting.
 4. Can be configured via .htaccess files.
-5. History support via readline.
-6. Tab completion for everything.
+5. Has history support via readline, and in-REPL result history variables.
+6. In-REPL tab completion and documentation for everything.
 7. Optional colored output.
 8. Can be extended easily.
 
@@ -21,8 +19,8 @@ This project contains (among other things) a [read-eval-print loop](http://en.wi
 
 The REPL was designed to work with the [Wigwam classloader](https://github.com/micha/wigwam/blob/master/ClassLoader.php). The `-p` command line option allows the inclusion of other
 classloaders prior to loading the Wigwam classloader, but tab completion may
-not work for those classes. Once the class has been loaded, however, tab
-completion should work fine.
+not work for those classes. Once these classes have been loaded, though, the tab
+completion mechanism will know about them.
 
 **Note:** Files included via the `-p` option do not run in the global scope.
 
