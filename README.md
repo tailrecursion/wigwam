@@ -105,6 +105,12 @@ exposes public static methods of specified API classes to the client.
    is specified declaratively as docstring annotations on the API methods.
    This decouples the API function code from the HTTP-related code.
 
+### Usage
+
+If you really want to use Wigwam send me a message and I can show you some
+live examples and help you get started. Otherwise, there is a probably out
+of date example you can look at over [here](https://github.com/micha/wigwam-example).
+
 # License
 
 ```
