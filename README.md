@@ -24,7 +24,7 @@ completion should work fine.
 
 **Note:** Files included via the `-p` option do not run in the global scope.
 
-### Install
+### Install (Requires PHP 5.3)
 
 Assuming _/usr/local/lib/php_ is in your PHP include path, and _/usr/local/bin_
 is in your shell path, I'd do something like this:
