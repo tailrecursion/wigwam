@@ -79,3 +79,53 @@ The following commands are available inside the REPL environment:
   /pp           Toggle echoing the result of each eval.
   /q <expr>     Disable echoing the result of this expression.
 ```
+
+# The Rest Of Wigwam
+
+Wigwam is a PHP [remote procedure call](http://en.wikipedia.org/wiki/Remote_procedure_call)
+(RPC) framework. The idea is that the serverside PHP code contains only
+business logic---no HTTP, JSON, or HTML producing code required. Wigwam
+exposes public static methods of specified API classes to the client.
+
+### Features
+
+1. API class methods are normal PHP functions. They take PHP data arguments
+   and return PHP data.
+2. Calling convention on the client (JavaScript client library included) is
+   the same as on the server. The function `MyNS\Foo::bar(mixed $x)` could
+   be called from the client JavaScript as `Wigwam.sync.MyNS.Foo.bar("asdf")`
+   (for synchronous requests---async is also implemented).
+3. Exceptions can be thrown in the PHP API class and caught in the client
+   JavaScript environment.
+4. RESTful transport.
+5. Automatic content negotiation, anti-CSRF token management, etc.
+6. HTTP-related configuration is via docstring annotations. For example the
+   `@verb` annotation tells the server which HTTP method to use when making
+   the request.
+7. Authorization of HTTP requests is via pluggable modules and authorization
+   is specified declaratively as docstring annotations on the API methods.
+   This decouples the API function code from the HTTP-related code.
+
+# License
+
+```
+Copyright (c) 2012 Micha Niskin
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+```
