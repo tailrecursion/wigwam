@@ -2,6 +2,7 @@
 // vim: ft=php
 
 error_reporting(0);
+
 // Parse .htaccess files
 
 $init = function() {
@@ -20,7 +21,7 @@ $init = function() {
     ini_set($k, $v);
   };
 
-  $option = getopt('c:f:i:j:Jv:hHqs:z');
+  $option = getopt('c:f:i:j:Jp:v:hHqs:z');
   $depth  = count(explode("/", getcwd())) - 1;
 
   if (! isset($option['H'])) {
@@ -42,6 +43,13 @@ $init = function() {
       $option['i'] = array($option['i']);
     foreach($option['i'] as $set)
       $setini(preg_replace('/^([^=]+)=/', 'php_value $1 ', $set));
+  }
+
+  if (isset($option['p'])) {
+    if (! is_array($option['p']))
+      $option['p'] = array($option['p']);
+    foreach($option['p'] as $pre)
+      require_once($pre);
   }
 };
 
@@ -67,7 +75,7 @@ Console::$HISTFILE_S = $_SERVER['HOME']."/.console.php.history.session";
 
 Console::setup();
 
-Console::$option = getopt('c:f:i:j:Jv:hHqs:z');
+Console::$option = getopt('c:f:i:j:Jp:v:hHqs:z');
 
 if (isset(Console::$option['z']))
   Console::$INTERACTIVE = false;

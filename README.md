@@ -15,6 +15,15 @@ This project contains (among other things) a [read-eval-print loop](http://en.wi
 7. Optional colored output.
 8. Can be extended easily.
 
+### Caveats
+
+The REPL was designed to work with the [Wigwam classloader](https://github.com/micha/wigwam/blob/master/ClassLoader.php). The `-p` command line option allows the inclusion of other
+classloaders prior to loading the Wigwam classloader, but tab-completion may
+not work for those classes. Once the class has been loaded, however, tab
+completion should work fine.
+
+**Note:** Files included via the `-p` option do not run in the global scope.
+
 ### Install
 
 Assuming _/usr/local/lib/php_ is in your PHP include path, and _/usr/local/bin_
@@ -43,6 +52,7 @@ Where OPTIONS are:
   -i <var=val>  Set PHP configuration option "var" to "val".
   -j <prefix>   Prefix for PHP history globals (default is "_").
   -J            Disable PHP history globals.
+  -p <file>     Require <file> before loading console's classloader.
   -q            Don't echo the result after evaling each expression.
   -s <file>     Run console commands in <file> before interactive REPL.
   -v <var=val>  Set $var to "val" globally.

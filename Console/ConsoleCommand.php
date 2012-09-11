@@ -103,12 +103,13 @@ Where OPTIONS are:
   -i <var=val>  Set PHP configuration option "var" to "val".
   -j <prefix>   Prefix for PHP history globals (default is "_").
   -J            Disable PHP history globals.
+  -p <file>     Require <file> before loading console's classloader.
   -q            Don't echo the result after evaling each expression.
   -s <file>     Run console commands in <file> before interactive REPL.
   -v <var=val>  Set \$var to "val" globally.
   -z            Run script files but don't start interactive REPL.
 
-Multiple -f, -i, and -v options may be specified on the same command line.
+Multiple -f, -i, -p, and -v options may be specified on the same command line.
 
 The following commands are available inside the REPL environment:
 
