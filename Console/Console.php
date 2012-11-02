@@ -9,15 +9,23 @@ class Console {
  
   /* ANSI terminal color escape */
   public static $colors = array(
-    "none"    => -1,
-    "black"   => 30,
-    "red"     => 31,
-    "green"   => 32,
-    "yellow"  => 33,
-    "blue"    => 34,
-    "magenta" => 35,
-    "cyan"    => 36,
-    "white"   => 37,
+    "none"          => -1,
+    "black"         => 30,
+    "red"           => 31,
+    "green"         => 32,
+    "yellow"        => 33,
+    "blue"          => 34,
+    "magenta"       => 35,
+    "cyan"          => 36,
+    "white"         => 37,
+    "bold-black"    => '1;30',
+    "bold-red"      => '1;31',
+    "bold-green"    => '1;32',
+    "bold-yellow"   => '1;33',
+    "bold-blue"     => '1;34',
+    "bold-magenta"  => '1;35',
+    "bold-cyan"     => '1;36',
+    "bold-white"    => '1;37',
   );
 
   public static $PS1_COLOR    = "\033[32;1mphp\033[34m%s\033[0m> ";
@@ -113,13 +121,18 @@ class Console {
   }
 
   public static function prompt() {
-    return sprintf(static::$PS1, static::$HISTORY ? ':'.(static::$n + 1) : '');
+    $p = static::$PS1;
+    $n = static::$HISTORY ? (static::$n + 1) : '';
+    return is_callable($p) ? $p($n) : sprintf($p, $n);
+  }
+
+  public static function strcolor($color="none") {
+    $color = $color == "none" ? 0 : static::$colors[$color];
+    return static::$OUTCOLOR != -1 ? "\033[{$color}m" : "";
   }
 
   public static function color($color="none") {
-    $color = $color == "none" ? 0 : static::$colors[$color];
-    if (static::$OUTCOLOR != -1)
-      printf("\033[{$color}m");
+    printf(static::strcolor($color));
   }
 
   public static function errMsg($message, $file, $line) {
