@@ -91,6 +91,8 @@ class ClassLoader {
   public static $exact_paths        = array();
   public static $exact_path_aliases = array();
 
+  private static $CACHE             = array();
+
   /*************************************************************************** 
    *** PRIVATE METHODS                                                     *** 
    ***************************************************************************/
@@ -237,12 +239,14 @@ class ClassLoader {
    * @return array The list of fully-qualified class names.
    */
   public static function listLoadableClasses() {
-    return array_unique(array_merge(
-      static::listWigwamClasses(),
-      static::listPathClasses(),
-      static::listExactPathClasses(),
-      static::listExactPathAliasClasses()
-    ));
+    if (! array_key_exists('listLoadableClasses', self::$CACHE))
+      self::$CACHE['listLoadableClasses'] = array_unique(array_merge(
+        static::listWigwamClasses(),
+        static::listPathClasses(),
+        static::listExactPathClasses(),
+        static::listExactPathAliasClasses()
+      ));
+    return self::$CACHE['listLoadableClasses'];
   }
 
   /**
