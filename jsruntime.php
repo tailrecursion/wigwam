@@ -52,7 +52,7 @@ function getExceptionDefs() {
  *
  * Fork me on github: https://github.com/micha/wigwam
  */
-(function() {
+(function($) {
 
   var api   = <?php echo str_replace('\\/', '/', json_encode($api)) ?>;
   var base  = "<?php echo dirname($_SERVER['REQUEST_URI']) ?>";
@@ -121,6 +121,7 @@ function getExceptionDefs() {
           });
 
           return function(success, error, complete, sync) {
+            console.log("ok got here");
             return Wigwam.ajax(
               method.verb,
               method.route,
@@ -233,8 +234,8 @@ function getExceptionDefs() {
       };
     },
 
-    async: function(proc, success, error) {
-      return proc(success, error);
+    async: function(proc, success, error, finaly) {
+      return proc(success, error, finaly);
     },
 
     sync: {}
@@ -246,4 +247,4 @@ function getExceptionDefs() {
 
   makeApi(api);
 
-})();
+})(jQuery);
