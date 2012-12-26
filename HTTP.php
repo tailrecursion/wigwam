@@ -16,6 +16,7 @@ class HTTP {
   const         MODE_PRODUCTION = "production";
 
   public static $mode;
+  public static $LOG_ERROR;
 
   public        $err;
 
@@ -61,6 +62,10 @@ class HTTP {
         'exception'   => 'Wigwam\\FatalException',
         'message'     => 'Something went wrong.',
       ));
+
+      if (HTTP::$LOG_ERROR)
+        call_user_func(HTTP::$LOG_ERROR, $errstr);
+
       die();
     };
     set_error_handler($error_handler);
@@ -93,6 +98,10 @@ class HTTP {
         'exception'   => 'Wigwam\\FatalException',
         'message'     => 'Something went wrong.',
       ));
+
+      if (HTTP::$LOG_ERROR)
+        call_user_func(HTTP::$LOG_ERROR, $error['message']);
+
       die();
     };
     register_shutdown_function($shutdown_handler);
@@ -237,6 +246,9 @@ class HTTP {
       } catch (Exception $e) {
         $body = NULL;
       }
+
+      if (HTTP::$LOG_ERROR && ! is_a($err, '\Wigwam\Exception'))
+        call_user_func(HTTP::$LOG_ERROR, $message);
 
       // Stop execution and send HTTP response immediately.
 
