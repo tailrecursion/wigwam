@@ -121,7 +121,6 @@ function getExceptionDefs() {
           });
 
           return function(success, error, complete, sync) {
-            console.log("ok got here");
             return Wigwam.ajax(
               method.verb,
               method.route,
@@ -195,12 +194,20 @@ function getExceptionDefs() {
             callback(data);
         },
         error: function(xhr,stat,err) {
-          var body  = JSON.parse(xhr.responseText),
-              token = body ? body.token : '',
-              e     = (body && body.exception)
-                        ? eval(body.exception.replace(/\\/, '.')) 
-                        : undefined;
-          Wigwam.csrfToken = xhr.getResponseHeader('X-CSRFToken');
+          var body, token, e;
+          try {
+            body  = JSON.parse(xhr.responseText),
+            token = body ? body.token : '',
+            e     = (body && body.exception)
+                      ? eval(body.exception.replace(/\\/, '.')) 
+                      : undefined;
+            Wigwam.csrfToken = xhr.getResponseHeader('X-CSRFToken');
+          } catch (err) {
+            body  = {exception: "Wigwam\\FatalException",
+                     type:      "Wigwam.FatalException",
+                     message:   "Something went wrong."};
+            e     = Wigwam.FatalException;
+          }
           e = e ? new e(body) : new Error(err);
           if (e instanceof Wigwam.BadCSRFToken) {
             Wigwam.csrfToken = body.token;          
