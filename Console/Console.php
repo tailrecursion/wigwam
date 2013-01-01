@@ -39,11 +39,11 @@ class Console {
     "bold-white"    => '1;37',
   );
 
-  public static $PS1_COLOR    = "\033[32;1mphp\033[34m %s \033[33m[%.3fs]\033[0m> ";
+  public static $PS1_COLOR    = "\033[34m[\033[33m%s\033[34m] [\033[33m%.3fs\033[34m] [\033[33m%.1fMB\033[34m]\033[0m\n>>> ";
 
   /** Current prompt. */
   public static $n            = 0;
-  public static $PS1          = "php %s [%.3fs]> ";
+  public static $PS1          = "[%s] [%.3fs] [%.1fMB]\n>>> ";
   public static $PS2          = '  *> ';
   public static $OUTCOLOR     = 36;
 
@@ -80,6 +80,7 @@ class Console {
   public static $tmp_status   = array(0,0);
   public static $start_time   = 0.0;
   public static $last_time    = 0.0;
+  public static $mem_usage    = 0.0;
 
   public static $completion_error;
   public static $ignore_errors = false;
@@ -151,7 +152,8 @@ class Console {
     $p = static::$PS1;
     $n = static::$HISTORY ? (static::$n + 1) : '';
     $t = static::$last_time;
-    return is_callable($p) ? $p($n, $t) : sprintf($p, $n, $t);
+    $m = static::$mem_usage;
+    return is_callable($p) ? $p($n, $t, $m) : sprintf($p, $n, $t, $m);
   }
 
   public static function strcolor($color="none") {

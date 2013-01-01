@@ -152,7 +152,8 @@ if (Console::$pid1 > 0) {
     Console::endCompletions();
     Console::$tmp_status  = explode(":", Console::getStatus());
     Console::$n           = Console::$tmp_status[0];
-    Console::$last_time   = round(Console::$tmp_status[1], 4);
+    Console::$last_time   = Console::$tmp_status[1];
+    Console::$mem_usage   = Console::$tmp_status[2]/1024/1024;
 
     if (Console::$reboot)
       break;
@@ -171,7 +172,9 @@ if (Console::$pid1 > 0) {
     if (Console::$pid2 > 0) {
       // child
       pcntl_waitpid(Console::$pid2, Console::$status);
-      Console::sendStatus(Console::$n . ":" . Console::$last_time);
+      Console::$mem_usage = memory_get_usage(true);
+      Console::sendStatus(
+        Console::$n . ":" . Console::$last_time . ":" . Console::$mem_usage);
     } else {
       // grandchild
       Console::$pid3 = posix_getpid();
@@ -199,8 +202,10 @@ if (Console::$pid1 > 0) {
             = Console::$result;
         }
 
-        Console::printResult(Console::$result, Console::$last_time);
+        Console::printResult(Console::$result);
       }
+
+      Console::$mem_usage = memory_get_usage(true);
 
       if (posix_getpid() != Console::$pid3) {
         // great-grandchild: could be here if eval'ed code called fork(), for
@@ -208,7 +213,8 @@ if (Console::$pid1 > 0) {
         exit(0);
       }
 
-      Console::sendStatus(Console::$n . ":" . Console::$last_time);
+      Console::sendStatus(
+        Console::$n . ":" . Console::$last_time . ":" . Console::$mem_usage);
 
       posix_kill(posix_getppid(), SIGTERM);
       pcntl_signal_dispatch();
