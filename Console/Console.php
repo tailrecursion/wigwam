@@ -1,6 +1,7 @@
 <?php namespace Wigwam\Console;
 
 use \RuntimeException;
+use \ReflectionMethod;
 
 /**
  * This is the Console class.
@@ -117,6 +118,19 @@ class Console {
     T_UNSET_CAST,
     T_VARIABLE,
   );
+
+  public static function probe() {
+    $args = func_get_args();
+    $cl   = array_shift($args);
+    $meth = array_shift($args);
+
+    $r = new ReflectionMethod($cl, $meth);
+    $r->setAccessible(true);
+
+    return call_user_func_array(
+      array($r, "invoke"),
+      array_merge(array(is_object($cl) ? $cl : null), $args));
+  }
 
   public static function done() {
     Console::$ignore_errors = true;
@@ -311,6 +325,9 @@ class Console {
   }
 
   public static function doReadline($prompt) {
+    $lines  = explode("\n", $prompt);
+    $prompt = array_pop($lines);
+    echo(implode("\n", $lines)."\n");
     $line = readline($prompt);
 
     if ($line === false)
