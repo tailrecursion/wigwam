@@ -147,6 +147,9 @@ Console::fork(Console::$pid1);
 
 if (Console::$pid1 > 0) {
   // parent
+
+  Console::$mem_usage = memory_get_usage(true)/1024/1024;
+
   while(true) {
     Console::readLine();
     Console::endCompletions();
