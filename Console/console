@@ -147,7 +147,10 @@ if (Console::$pid1 > 0) {
   while(true) {
     Console::readLine();
     Console::endCompletions();
-    Console::$n = Console::getStatus();
+    Console::$tmp_status  = explode(":", Console::getStatus());
+    Console::$n           = Console::$tmp_status[0];
+    Console::$last_time   = round(Console::$tmp_status[1], 4);
+
     if (Console::$reboot)
       break;
   }
@@ -165,7 +168,7 @@ if (Console::$pid1 > 0) {
     if (Console::$pid2 > 0) {
       // child
       pcntl_waitpid(Console::$pid2, Console::$status);
-      Console::sendStatus(Console::$n);
+      Console::sendStatus(Console::$n . ":" . Console::$last_time);
     } else {
       // grandchild
       Console::$pid3 = posix_getpid();
@@ -174,16 +177,21 @@ if (Console::$pid1 > 0) {
 
       pcntl_signal(SIGCHLD, SIG_IGN);
 
+      Console::$start_time = microtime(true);
+
       if (eval(Console::getLine()) === false) {
         Console::printFatal(error_get_last());
       } elseif (Console::$result !== Console::$no_result) {
+        Console::$last_time = microtime(true) - Console::$start_time;
+
         if (Console::$HISTORY) {
           ++Console::$n;
           $GLOBALS[Console::$HISTPREFIX]
             = $GLOBALS[Console::$HISTPREFIX.Console::$n]
             = Console::$result;
         }
-        Console::printResult(Console::$result);
+
+        Console::printResult(Console::$result, Console::$last_time);
       }
 
       if (posix_getpid() != Console::$pid3) {
@@ -192,7 +200,7 @@ if (Console::$pid1 > 0) {
         exit(0);
       }
 
-      Console::sendStatus(Console::$n);
+      Console::sendStatus(Console::$n . ":" . Console::$last_time);
 
       posix_kill(posix_getppid(), SIGTERM);
       pcntl_signal_dispatch();

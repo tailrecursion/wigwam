@@ -203,10 +203,11 @@ function getExceptionDefs() {
                       : undefined;
             Wigwam.csrfToken = xhr.getResponseHeader('X-CSRFToken');
           } catch (err) {
-            body  = {exception: "Wigwam\\FatalException",
-                     type:      "Wigwam.FatalException",
-                     message:   "Something went wrong."};
-            e     = Wigwam.FatalException;
+            body  = {exception: "Wigwam\\ServerException",
+                     type:      "Wigwam.ServerException",
+                     message:   "There was an error communicating with the " +
+                                "server. Please try again."};
+            e     = Wigwam.ServerException;
           }
           e = e ? new e(body) : new Error(err);
           if (e instanceof Wigwam.BadCSRFToken) {
