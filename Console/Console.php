@@ -3,6 +3,16 @@
 use \RuntimeException;
 use \ReflectionMethod;
 
+function substr_replace_first($str, $find, $replace) {
+  return (($pos = strpos($str, $find)) !== false)
+    ? substr_replace($str, $replace, $pos, strlen($find))
+    : $str;
+}
+
+function num_tok($arr) {
+  return is_array($arr) && $arr[0] == T_LNUMBER ? $arr[1] : null;
+}
+
 /**
  * This is the Console class.
  */
@@ -277,6 +287,28 @@ class Console {
       return;
 
     array_shift($toks);
+
+    for ($i=0; $i<count($toks)-1; $i++) {
+      $t1 = $toks[$i];
+      $t2 = $toks[$i+1];
+
+      if ($toks[$i] == '$') {
+        if (! is_null($n = num_tok($toks[$i+1])))
+          return static::printableLine(
+            substr_replace_first(
+              $line, "\${$n}", "\$_[{$n}]"));
+        if ($toks[$i+1] == '$')
+          return static::printableLine(
+            substr_replace_first(
+              $line, "\$\$", "\$_[-1]"));
+        if ($i < count($toks)-2 && $toks[$i+1] == '-' &&
+          ! is_null($n = num_tok($toks[$i+2])))
+          return static::printableLine(
+            substr_replace_first(
+              $line, "\$-{$n}", "\$_[-{$n}]"));
+      }
+    }
+
     static::gobbleWhitespace($toks);
 
     if (static::$DEBUG)
@@ -288,11 +320,13 @@ class Console {
       return $toks[0] == '(';
     }
 
-    return count($toks)
-      ? (count($toks[0])
-          ? in_array($toks[0][0], static::$printable_tokens)
-          : in_array($toks[0], static::$printable_tokens))
-      : false;
+    return 
+      (count($toks) &&
+        (count($toks[0]) &&
+          (in_array($toks[0][0], static::$printable_tokens) ||
+          in_array($toks[0], static::$printable_tokens))))
+        ? $line
+        : false;
   }
 
   public static function escapeHist($arg) {
@@ -359,18 +393,17 @@ class Console {
   }
 
   public static function getLine() {
-    $line   = preg_replace('/;$/', '', static::readSock(0, 1));
+    $line = preg_replace('/;$/', '', static::readSock(0, 1));
 
     if (static::$completion_error)
       $line = " ";
 
-    $line   = ConsoleCommand::doit($line);
+    $line = ConsoleCommand::doit($line);
+    $plin = static::printableLine($line);
 
     $line = 'Wigwam\Console\Console::$result = '
-      . (static::printableLine($line) 
-          ? ''
-          : 'Wigwam\Console\Console::$no_result; ')
-      . $line.';';
+      . ($plin ? '' : 'Wigwam\Console\Console::$no_result; ')
+      . $plin . ';';
 
     static::$line = $line;
 

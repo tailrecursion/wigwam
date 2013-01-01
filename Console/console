@@ -1,5 +1,8 @@
 <?php
 // vim: ft=php
+//
+
+use Wigwam\Console\HistArray;
 
 error_reporting(0);
 
@@ -186,8 +189,13 @@ if (Console::$pid1 > 0) {
 
         if (Console::$HISTORY) {
           ++Console::$n;
-          $GLOBALS[Console::$HISTPREFIX]
+
+          if (! isset($GLOBALS[Console::$HISTPREFIX]))
+            $GLOBALS[Console::$HISTPREFIX] = new HistArray();
+
+          $GLOBALS[Console::$HISTPREFIX][]
             = $GLOBALS[Console::$HISTPREFIX.Console::$n]
+            = $GLOBALS[Console::$HISTPREFIX.Console::$HISTPREFIX]
             = Console::$result;
         }
 

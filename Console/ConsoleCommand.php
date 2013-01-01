@@ -130,9 +130,15 @@ THE REPL ENVIRONMENT
   If PHP history globals are enabled (i.e. the -J option is not specified),
   the expressions evaluated by the repl are numbered, starting from 1. The
   current expression number is displayed in the prompt. The result of the
-  expression is recorded in a global variable named \$_<num>, where <num> is
+  expression is recorded and accessible via the form \$_<num>, where <num> is
   the expression number. Additionally, the result of the previous expression
-  is always assigned to \$_.
+  is always assigned to \$__. There is also an array, \$_, which can be used
+  as well. This array can take negative indexes, which fetch from the tail of
+  the array.
+
+  History substitution is done via the \$<num> form, where <num> is an
+  expression number or a negative number (latest - n). \$\$ is the previous
+  expression.
 
   If the underscore-prefixed history globals clobber something in your
   environment, you can change the prefix to something else using the -j option,
