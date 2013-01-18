@@ -151,7 +151,7 @@ class Console {
 
   public static function prompt() {
     $p = static::$PS1;
-    $n = static::$HISTORY ? (static::$n + 1) : '';
+    $n = static::$HISTORY ? static::$n : '';
     $t = static::$last_time;
     $m = static::$mem_usage;
     return is_callable($p) ? $p($n, $t, $m) : sprintf($p, $n, $t, $m);
