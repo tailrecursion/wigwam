@@ -77,6 +77,7 @@ class Console {
   public static $no_result;
 
   public static $tmp;
+  public static $tmp_result;
   public static $tmp_status   = array(0,0);
   public static $start_time   = 0.0;
   public static $last_time    = 0.0;
@@ -177,6 +178,20 @@ class Console {
     );
   }
 
+  public static function printException($e) {
+    Console::printErr(
+      get_class($e).": ".$e->getMessage(),
+      $e->getFile(),
+      $e->getLine()
+    );
+  }
+
+  public static function printErrData($data) {
+    Console::color("red");
+    error_log(var_export($data, true));
+    Console::color();
+  }
+
   public static function printErr($message, $file, $line) {
     Console::color("red");
     error_log(static::errMsg($message, $file, $line));
@@ -214,11 +229,7 @@ class Console {
     });
 
     set_exception_handler(function($e) {
-      Console::printErr(
-        get_class($e).": ".$e->getMessage(),
-        $e->getFile(),
-        $e->getLine()
-      );
+      Console::printException($e);
       Console::done();
     });
 

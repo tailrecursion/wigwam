@@ -188,7 +188,19 @@ if (Console::$pid1 > 0) {
 
       Console::$start_time = microtime(true);
 
-      if (eval(Console::getLine()) === false) {
+      try {
+        Console::$tmp_result = eval(Console::getLine());
+      } catch (\Exception $e) {
+        Console::$result    = $e;
+        Console::$printnext = false;
+        Console::printException($e);
+        if (method_exists($e, 'getData')) {
+          error_log("");
+          Console::printErrData($e->getData());
+        }
+      }
+
+      if (Console::$tmp_result === false) {
         Console::printFatal(error_get_last());
       } elseif (Console::$result !== Console::$no_result) {
         Console::$last_time = microtime(true) - Console::$start_time;
