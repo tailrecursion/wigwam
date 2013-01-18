@@ -190,13 +190,13 @@ if (Console::$pid1 > 0) {
 
       try {
         Console::$tmp_result = eval(Console::getLine());
-      } catch (\Exception $e) {
-        Console::$result    = $e;
+      } catch (\Exception $______wigwam_e______) {
+        Console::$result    = $______wigwam_e______;
         Console::$printnext = false;
-        Console::printException($e);
-        if (method_exists($e, 'getData')) {
+        Console::printException($______wigwam_e______);
+        if (method_exists($______wigwam_e______, 'getData')) {
           error_log("");
-          Console::printErrData($e->getData());
+          Console::printErrData($______wigwam_e______->getData());
         }
       }
 
