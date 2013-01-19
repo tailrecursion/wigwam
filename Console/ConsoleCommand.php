@@ -85,6 +85,11 @@ class ConsoleCommand {
     return $argline;
   }
 
+  public static function x($argline) {
+    Console::$printshortnext = false;
+    return $argline;
+  }
+
   public static function h($argline) {
     global $argv;
     $name = basename($argv[0]);
@@ -101,8 +106,6 @@ Where OPTIONS are:
   -h            Print usage info and exit.
   -H            Don't parse .htaccess files at startup.
   -i <var=val>  Set PHP configuration option "var" to "val".
-  -j <prefix>   Prefix for PHP history globals (default is "_").
-  -J            Disable PHP history globals.
   -p <file>     Require <file> before loading console's classloader.
   -q            Don't echo the result after evaling each expression.
   -s <file>     Run console commands in <file> before interactive REPL.
@@ -124,25 +127,16 @@ THE REPL ENVIRONMENT
   /p <expr>     Toggle echoing the result just for this expression.
   /pp           Toggle echoing the result of each eval.
   /q <expr>     Disable echoing the result of this expression.
+  /x <expr>     Examine result (print full var_export output).
 
   Console history globals:
 
-  If PHP history globals are enabled (i.e. the -J option is not specified),
-  the expressions evaluated by the repl are numbered, starting from 1. The
+  The expressions evaluated by the repl are numbered, starting from 0. The
   current expression number is displayed in the prompt. The result of the
-  expression is recorded and accessible via the form \$_<num>, where <num> is
-  the expression number. Additionally, the result of the previous expression
-  is always assigned to \$__. There is also an array, \$_, which can be used
-  as well. This array can take negative indexes, which fetch from the tail of
-  the array.
-
-  History substitution is done via the \$<num> form, where <num> is an
-  expression number or a negative number (latest - n). \$\$ is the previous
-  expression.
-
-  If the underscore-prefixed history globals clobber something in your
-  environment, you can change the prefix to something else using the -j option,
-  or you can disable them completely with -J.
+  expression is recorded and accessible via the form \$<num>, where <num> is
+  an integer corresponding to an expression in the numbered history. The <num>
+  parameter can be negative, meaning count back from the current expression
+  number. \$\$ is the previous expression.
 
 EOT;
 

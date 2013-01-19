@@ -49,8 +49,7 @@ class Console {
 
   public static $INTERACTIVE  = true;
 
-  public static $HISTORY      = true;
-  public static $HISTPREFIX   = "_";
+  public static $HISTORY;
   public static $HISTSIZE     = 1000;
 
   public static $HISTFILE_S   = "";
@@ -62,8 +61,10 @@ class Console {
   public static $getopt       = "f:q";
   public static $option       = array();
 
-  public static $print        = true;
-  public static $printnext    = true;
+  public static $print          = true;
+  public static $printnext      = true;
+  public static $printshort     = true;
+  public static $printshortnext = true;
 
   public static $sock         = array();
   public static $reboot       = false;
@@ -84,9 +85,11 @@ class Console {
   public static $mem_usage    = 0.0;
 
   public static $completion_error;
-  public static $ignore_errors = false;
+  public static $ignore_errors              = false;
   public static $print_before_error_message = "";
   public static $print_after_error_message  = "";
+
+  public static $printers = array();
 
   public static $argv;
 
@@ -131,6 +134,26 @@ class Console {
     T_VARIABLE,
   );
 
+  public static function emitTryCatch() {
+    while(array_key_exists(
+      ($name = str_replace('.', '', uniqid('____wigwam_',true))), $GLOBALS));
+
+    $expr = <<<EOT
+      try {
+        Wigwam\\Console\\Console::\$tmp_result = eval(Wigwam\\Console\\Console::getLine());
+      } catch (\\Exception \$__NAME__) {
+        Wigwam\\Console\\Console::printResult(\$__NAME__);
+        Wigwam\\Console\\Console::\$result    = \$__NAME__;
+        Wigwam\\Console\\Console::printException(\$__NAME__);
+        Wigwam\\Console\\Console::\$printnext = false;
+      }
+
+      unset(\$__NAME__);
+EOT;
+
+    return str_replace('__NAME__', $name, $expr);
+  }
+
   public static function probe() {
     $args = func_get_args();
     $cl   = array_shift($args);
@@ -151,7 +174,7 @@ class Console {
 
   public static function prompt() {
     $p = static::$PS1;
-    $n = static::$HISTORY ? static::$n : '';
+    $n = static::$n;
     $t = static::$last_time;
     $m = static::$mem_usage;
     return is_callable($p) ? $p($n, $t, $m) : sprintf($p, $n, $t, $m);
@@ -179,17 +202,23 @@ class Console {
   }
 
   public static function printException($e) {
-    Console::printErr(
-      get_class($e).": ".$e->getMessage(),
-      $e->getFile(),
-      $e->getLine()
-    );
-  }
+    $t = $e->getTrace();
+    $p = $e->getPrevious();
 
-  public static function printErrData($data) {
     Console::color("red");
-    error_log(var_export($data, true));
+
+    if ($e->getFile() != $t[0]['file'] || $e->getLine() != $t[0]['line'])
+      error_log(sprintf("AT %s(%d)", $e->getFile(), $e->getLine()));
+    error_log(implode("\n", array_slice(explode("\n", $e->getTraceAsString()), 0, -4)));
+
     Console::color();
+
+    if ($p) {
+      Console::color("yellow");
+      error_log(Console::pp($p));
+      Console::color();
+      Console::printException($p);
+    }
   }
 
   public static function printErr($message, $file, $line) {
@@ -309,16 +338,16 @@ class Console {
         if (! is_null($n = num_tok($toks[$i+1])))
           return static::printableLine(
             substr_replace_first(
-              $line, "\${$n}", "\$_[{$n}]"));
+              $line, "\${$n}", "Wigwam\\Console\\Console::\$HISTORY[{$n}]"));
         if ($toks[$i+1] == '$')
           return static::printableLine(
             substr_replace_first(
-              $line, "\$\$", "\$_[-1]"));
+              $line, "\$\$", "Wigwam\\Console\\Console::\$HISTORY[-1]"));
         if ($i < count($toks)-2 && $toks[$i+1] == '-' &&
           ! is_null($n = num_tok($toks[$i+2])))
           return static::printableLine(
             substr_replace_first(
-              $line, "\$-{$n}", "\$_[-{$n}]"));
+              $line, "\$-{$n}", "Wigwam\\Console\\Console::\$HISTORY[-{$n}]"));
       }
     }
 
@@ -423,14 +452,53 @@ class Console {
     return $line;
   }
 
+  public static function printObj($o) {
+    $r = new \ReflectionClass($o);
+    $p = Console::$printers;
+
+    while ($r && !array_key_exists($r->getName(), $p))
+      $r = $r->getParentClass();
+
+    $pp = $r ? $p[$r->getName()] : function($o) {
+      return sprintf("#<%s>", get_class($o));
+    };
+
+    return $pp($o);
+  }
+
+  public static function pp($thing, $indent='', $shift='  ') {
+    $ret = "";
+    if (is_array($thing) && ! count($thing)) {
+      $ret .= "array()";
+    } elseif (is_array($thing)) {
+      $ret .= "array(\n";
+      foreach ($thing as $k => $v)
+        $ret .= sprintf(
+          "%s%s%s => %s,\n",
+          $indent,
+          $shift,
+          var_export($k, true),
+          static::pp($v, $indent.$shift)
+        );
+      $ret .= "$indent)";
+    } elseif (is_object($thing)) {
+      $ret .= Console::printObj($thing);
+    } else {
+      $ret .= var_export($thing, true);
+    }
+
+    return $ret;
+  }
+
   public static function printResult($res) {
     if (static::$printnext)
       printf(
         ( ($hc = static::$OUTCOLOR) == -1 )
           ? "=> %s\n"
           : "\033[".$hc."m%s\033[0m\n", 
-        var_export($res, true)
+        static::$printshortnext ? static::pp($res) : var_export($res, true)
       );
+    static::$printshortnext = static::$printshort;
     static::$printnext = static::$print;
   }
 

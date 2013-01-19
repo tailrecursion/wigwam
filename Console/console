@@ -71,6 +71,50 @@ use Wigwam\Console\ConsoleCommand;
 if (! class_exists('Wigwam\\ClassLoader'))
   require_once('Wigwam/ClassLoader.php');
 
+
+Console::$printers['ArrayIterator'] = function($o) {
+  return sprintf(
+    "#<%s %s>",
+    get_class($o),
+    Console::pp($o->getArrayCopy()));
+};
+
+Console::$printers['ReflectionProperty'] =
+Console::$printers['ReflectionMethod'] = function($o) {
+  return sprintf(
+    "#<%s %s::%s>",
+    get_class($o),
+    $o->getDeclaringClass()->getName(),
+    $o->getName());
+};
+
+Console::$printers['ReflectionFunction'] =
+Console::$printers['ReflectionClass'] = function($o) {
+  return sprintf(
+    "#<%s %s>",
+    get_class($o),
+    $o->getName());
+};
+
+Console::$printers['Exception'] = function($o) {
+  return sprintf(
+    "#<%s %s>",
+    get_class($o),
+    $o->getMessage());
+};
+
+Console::$printers['Wigwam\\Exception'] = function($o) {
+  return sprintf(
+    "#<%s %s %s>",
+    get_class($o),
+    $o->getMessage(),
+    Console::pp($o->getData()));
+};
+
+Console::$printers['DateTime'] = function($o) {
+  return sprintf("#<%s %s>", get_class($o), $o->format('c'));
+};
+
 // This is just a unique thing that will never be === to any result.
 Console::$no_result  = new DateTime('1900-01-01');
 
@@ -78,7 +122,7 @@ Console::$HISTFILE_S = $_SERVER['HOME']."/.console.php.history.session";
 
 Console::setup();
 
-Console::$option = getopt('c:f:i:j:Jp:v:hHqs:z');
+Console::$option = getopt('c:f:i:p:v:hHqs:z');
 
 if (isset(Console::$option['z']))
   Console::$INTERACTIVE = false;
@@ -87,9 +131,6 @@ if (isset(Console::$option['h'])) {
   ConsoleCommand::h('');
   exit();
 }
-
-if (isset(Console::$option['J']))
-  Console::$HISTORY = false;
 
 if (isset(Console::$option['s'])) {
   if (is_array(Console::$option['s']))
@@ -108,12 +149,6 @@ if (isset(Console::$option['c'])) {
 
 if (Console::$OUTCOLOR != -1)
   Console::$PS1 = Console::$PS1_COLOR;
-
-if (isset(Console::$option['j'])) {
-  if (is_array(Console::$option['j']))
-    Console::$option['j'] = array_pop(Console::$option['j']);
-  Console::$HISTPREFIX = Console::$option['j'];
-}
 
 if (isset(Console::$option['v'])) {
   if (is_array(Console::$option['v']))
@@ -188,34 +223,19 @@ if (Console::$pid1 > 0) {
 
       Console::$start_time = microtime(true);
 
-      try {
-        Console::$tmp_result = eval(Console::getLine());
-      } catch (\Exception $______wigwam_e______) {
-        Console::$result    = $______wigwam_e______;
-        Console::$printnext = false;
-        Console::printException($______wigwam_e______);
-        if (method_exists($______wigwam_e______, 'getData')) {
-          error_log("");
-          Console::printErrData($______wigwam_e______->getData());
-        }
-      }
+      eval(Console::emitTryCatch());
 
       if (Console::$tmp_result === false) {
         Console::printFatal(error_get_last());
       } elseif (Console::$result !== Console::$no_result) {
         Console::$last_time = microtime(true) - Console::$start_time;
 
-        if (Console::$HISTORY) {
-          ++Console::$n;
+        ++Console::$n;
 
-          if (! isset($GLOBALS[Console::$HISTPREFIX]))
-            $GLOBALS[Console::$HISTPREFIX] = new HistArray();
+        if (! is_object(Console::$HISTORY))
+          Console::$HISTORY = new HistArray();
 
-          $GLOBALS[Console::$HISTPREFIX][]
-            = $GLOBALS[Console::$HISTPREFIX.Console::$n]
-            = $GLOBALS[Console::$HISTPREFIX.Console::$HISTPREFIX]
-            = Console::$result;
-        }
+        Console::$HISTORY[] = Console::$result;
 
         Console::printResult(Console::$result);
       }
