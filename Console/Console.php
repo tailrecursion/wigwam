@@ -466,7 +466,7 @@ EOT;
     return $pp($o);
   }
 
-  public static function pp($thing, $indent='', $shift='  ') {
+  public static function pp($thing, $shift='  ') {
     $ret = "";
     if (is_array($thing) && ! count($thing)) {
       $ret .= "array()";
@@ -474,13 +474,12 @@ EOT;
       $ret .= "array(\n";
       foreach ($thing as $k => $v)
         $ret .= sprintf(
-          "%s%s%s => %s,\n",
-          $indent,
+          "%s%s => %s,\n",
           $shift,
           var_export($k, true),
-          static::pp($v, $indent.$shift)
+          implode("\n$shift", explode("\n", static::pp($v, $shift)))
         );
-      $ret .= "$indent)";
+      $ret .= ")";
     } elseif (is_object($thing)) {
       $ret .= Console::printObj($thing);
     } else {
