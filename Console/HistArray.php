@@ -4,7 +4,7 @@ use ArrayAccess;
 
 class HistArray implements ArrayAccess {
 
-  private $coll = array();
+  public $coll = array();
 
   private function i($i) {
     return $i + ($i < 0 ? count($this->coll) : 0);
@@ -28,6 +28,11 @@ class HistArray implements ArrayAccess {
 
   public function offsetUnset($i) {
     unset($this->coll[$this->i($i)]);
+  }
+
+  public function getArrayCopy() {
+    $ret = $this->coll;
+    return $ret;
   }
 }
 

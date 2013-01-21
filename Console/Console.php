@@ -44,12 +44,13 @@ class Console {
   /** Current prompt. */
   public static $n            = 0;
   public static $PS1          = "[%s] [%.3fs] [%.1fMB]\n>>> ";
-  public static $PS2          = '  *> ';
+  public static $PS2          = '+++ ';
   public static $OUTCOLOR     = 36;
+  public static $welcome;
 
   public static $INTERACTIVE  = true;
 
-  public static $HISTORY;
+  public static $HISTORY_RES;
   public static $HISTSIZE     = 1000;
 
   public static $HISTFILE_S   = "";
@@ -237,14 +238,23 @@ EOT;
     error_reporting(0);
 
     static::getSocks();
-    static::$argv       = $argv;
 
-    readline_read_history(static::getHistFile());
+    static::$argv = $argv;
 
-    if (is_writable(dirname(static::$HISTFILE_S)))
-      system("> ".escapeshellarg(static::$HISTFILE_S));
-    else
-      static::$HISTFILE_S = false;
+    if (! count(readline_list_history())) {
+      $h = unserialize(file_get_contents(static::getHistFile()));
+      $h = is_array($h) ? $h : array();
+
+      readline_clear_history();
+
+      array_map(
+        'readline_add_history',
+        array_reverse(array_slice(array_reverse($h), 0, static::$HISTSIZE)));
+    }
+
+    static::$n = count(readline_list_history());
+
+    static::$HISTFILE_S = false;
 
     register_shutdown_function(function() {
       if (! Console::$ignore_errors && $e = error_get_last())
@@ -323,10 +333,12 @@ EOT;
     }
   }
 
-  public static function printableLine($line) {
+  public static function expandHistory($line) {
     $toks = token_get_all('<?php '.$line);
     if (! count($toks))
       return;
+
+    $h = readline_list_history();
 
     array_shift($toks);
 
@@ -335,21 +347,33 @@ EOT;
       $t2 = $toks[$i+1];
 
       if ($toks[$i] == '$') {
+
+        // Substitute history result in expression.
         if (! is_null($n = num_tok($toks[$i+1])))
-          return static::printableLine(
+          return static::expandHistory(
             substr_replace_first(
-              $line, "\${$n}", "Wigwam\\Console\\Console::\$HISTORY[{$n}]"));
+              $line, "\${$n}", $h[$n]));
         if ($toks[$i+1] == '$')
-          return static::printableLine(
+          return static::expandHistory(
             substr_replace_first(
-              $line, "\$\$", "Wigwam\\Console\\Console::\$HISTORY[-1]"));
+              $line, "\$\$", $h[count($h)-1]));
         if ($i < count($toks)-2 && $toks[$i+1] == '-' &&
           ! is_null($n = num_tok($toks[$i+2])))
-          return static::printableLine(
+          return static::expandHistory(
             substr_replace_first(
-              $line, "\$-{$n}", "Wigwam\\Console\\Console::\$HISTORY[-{$n}]"));
+              $line, "\$-{$n}", $h[count($h)-$n]));
       }
     }
+
+    return $line;
+  }
+
+  public static function printableLine($line) {
+    $toks = token_get_all('<?php '.$line);
+    if (! count($toks))
+      return;
+
+    array_shift($toks);
 
     static::gobbleWhitespace($toks);
 
@@ -375,54 +399,59 @@ EOT;
     return addcslashes(addcslashes(escapeshellarg($arg), "\r\n\t"), '\\');
   }
 
-  public static function updateHistFile($line) {
-    if (static::$HISTFILE_S)
-      system("echo ".static::escapeHist($line)." >> ".static::escapeHist(static::$HISTFILE_S));
-    readline_add_history($line);
-    static::writeHistFile();
-  }
-
-  public static function writeHistFile() {
-    $f    = static::getHistFile();
-    $siz  = static::$HISTSIZE;
-
-    if (! readline_write_history($f))
-      return;
-
-    // Prevent history file from growing arbitrarily large.
-
-    // NOTE: This code is specific to libedit, possibly. It may or may not
-    // work correctly with libreadline. Specifically, libedit seems to need to
-    // have '_HiStOrY_V2_' as the first line of the file.
-
-    $head     = `head -n 1 '$f'`;
-    $trimmed  = `tail -n $siz '$f'`;
-    file_put_contents($f, "$head$trimmed");
+  public static function isValidPHP($line) {
+    $f = tempnam(sys_get_temp_dir(),"");
+    $c = "php -l '$f'";
+    file_put_contents($f, "<?php\n$line\n?>\n");
+    exec($c, $out);
+    unlink($f);
+    return count($out) && substr($out[0],0,2) == 'No';
   }
 
   public static function doReadline($prompt) {
     $lines  = explode("\n", $prompt);
     $prompt = array_pop($lines);
     echo(implode("\n", $lines)."\n");
-    $line = readline($prompt);
 
-    if ($line === false)
+    $line = static::expandHistory(readline($prompt));
+
+    if ($line && ($l = substr(ltrim($line),0,1)) != '/') {
+      while (strlen($l) && ! static::isValidPHP($line)) {
+        $l = static::expandHistory(readline(static::$PS2));
+        $line .= "\n$l";
+      }
+
+      if (static::isValidPHP($line)) {
+        readline_add_history($line);
+        static::writeHistory();
+        static::readHistory();
+      }
+    } elseif ($line === false) {
       static::$reboot = true;
-
-    if (strlen($line))
-      static::updateHistFile($line);
-    else
-      $line = ' ';
-
-    if (static::$reboot)
       $line = '/q Wigwam\\Console\\Console::$reboot = true';
+    }
 
-    return $line;
+    return strlen($line) ? $line : ' ';
   }
 
   public static function stopWorkers() {
     static::writeSock(0, 0, ":done:");
     static::writeSock(1, 0, ":done:");
+  }
+
+  public static function readHistory() {
+    $h = unserialize(file_get_contents(static::getHistFile()));
+    $h = is_array($h) ? $h : array();
+    readline_clear_history();
+    array_map('readline_add_history', $h);
+    Console::$n = count(readline_list_history());
+  }
+
+  public static function writeHistory() {
+    file_put_contents(
+      static::getHistFile(),
+      serialize(array_reverse(array_slice(
+        array_reverse(array_unique(readline_list_history())), 0, static::$HISTSIZE))));
   }
 
   public static function readLine() {
@@ -440,12 +469,16 @@ EOT;
     if (static::$completion_error)
       $line = " ";
 
+    if (strlen(trim($line)) && static::isValidPHP($line)) {
+      static::readHistory();
+    }
+
     $line = ConsoleCommand::doit($line);
     $plin = static::printableLine($line);
 
     $line = 'Wigwam\Console\Console::$result = '
       . ($plin ? '' : 'Wigwam\Console\Console::$no_result; ')
-      . $plin . ';';
+      . $line . ';';
 
     static::$line = $line;
 

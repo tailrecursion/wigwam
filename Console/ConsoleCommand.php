@@ -124,23 +124,33 @@ THE REPL ENVIRONMENT
                 will be used.
   /f <file>     Require() <file>.
   /h            Print usage info.
+  /hh           Print expression history.
   /p <expr>     Toggle echoing the result just for this expression.
   /pp           Toggle echoing the result of each eval.
   /q <expr>     Disable echoing the result of this expression.
   /x <expr>     Examine result (print full var_export output).
 
-  Console history globals:
+HISTORY EXPANSION
 
-  The expressions evaluated by the repl are numbered, starting from 0. The
-  current expression number is displayed in the prompt. The result of the
-  expression is recorded and accessible via the form \$<num>, where <num> is
-  an integer corresponding to an expression in the numbered history. The <num>
-  parameter can be negative, meaning count back from the current expression
-  number. \$\$ is the previous expression.
+  History expansion is pretty standard. \$\$ is the previous expression. \$0,
+  \$1, \$2, ... expand to expression number 0, 1, 2, etc. Using a negative
+  index, like \$-4 for example, refers to the 4th previous expression. Note
+  that \$\$ and \$-1 are equivalent.
 
 EOT;
 
     echo "$help\n";
+    return '';
+  }
+
+  public static function hh($argline) {
+    $h = readline_list_history();
+    $s = implode("\n", array_map(function($k, $v) {
+      return sprintf("%5d  %s", $k, implode("\n       ", explode("\n", $v)));
+    }, array_keys($h), array_values($h)));
+
+    if ($s) print("$s\n");
+
     return '';
   }
 

@@ -176,7 +176,17 @@ Console::setup();
 if (isset(Console::$option['q']))
   Console::$print = Console::$printnext = false;
 
-echo "\nConsole ready. Press ctrl-d to reload, ctrl-c to quit, /h for help.\n\n";
+Console::$welcome = <<<EOT
+
+PHP:    %s
+Zend:   %s
+
+Press ctrl-d to reload, ctrl-c to quit, /h for help.
+
+
+EOT;
+
+printf(Console::$welcome, phpversion(), zend_version());
 
 Console::fork(Console::$pid1);
 
@@ -229,14 +239,6 @@ if (Console::$pid1 > 0) {
         Console::printFatal(error_get_last());
       } elseif (Console::$result !== Console::$no_result) {
         Console::$last_time = microtime(true) - Console::$start_time;
-
-        ++Console::$n;
-
-        if (! is_object(Console::$HISTORY))
-          Console::$HISTORY = new HistArray();
-
-        Console::$HISTORY[] = Console::$result;
-
         Console::printResult(Console::$result);
       }
 
