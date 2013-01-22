@@ -451,7 +451,7 @@ EOT;
     file_put_contents(
       static::getHistFile(),
       serialize(array_reverse(array_slice(
-        array_reverse(array_unique(readline_list_history())), 0, static::$HISTSIZE))));
+        array_reverse(readline_list_history()), 0, static::$HISTSIZE))));
   }
 
   public static function readLine() {
