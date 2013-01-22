@@ -190,6 +190,17 @@ EOT;
     printf(static::strcolor($color));
   }
 
+  public static function center($s) {
+    $w    = exec('tput cols');
+    $s    = array_map(function($x) use ($w) {
+              return substr($x, 0, $w);
+            }, array_map('rtrim', explode("\n", $s)));
+    $max  = array_reduce(array_map('strlen', $s), 'max', 0);
+    $pad  = $w > $max ? str_repeat(' ', floor(($w - $max) / 2) - 0) : '';
+
+    return $pad . implode("\n$pad", $s) . "\n";
+  }
+
   public static function errMsg($message, $file, $line) {
     return sprintf(
       "%sPHP [%d]: %s\nIn %s line %d%s",
