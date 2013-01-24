@@ -82,6 +82,14 @@ class ConsoleCommandCompletion {
         $m = $this->matchVariable($v[0]);
         return $m;
 
+      case array(T_VARIABLE, '[', T_ENCAPSED_AND_WHITESPACE):
+        $v = $GLOBALS[removeSigil($v[0])];
+        return is_array($v)
+          ? array_map(function($x) {
+              return sprintf("%s", $x);
+            }, array_keys($v))
+          : false;
+
       case array(T_VARIABLE, T_OBJECT_OPERATOR):
         $class  = get_class($GLOBALS[removeSigil($v[0])]);
         return $this->matchObjVarOrMethod($class, '');

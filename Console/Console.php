@@ -283,10 +283,17 @@ EOT;
       Console::done();
     });
 
-    readline_completion_function(function($buf, $i) {
+    $completion_fn = function($buf, $i) use (&$completion_fn) {
       $orig   = $buf;
       $info   = readline_info();
-      $buf    = substr($info['line_buffer'], 0 , $info['point']);
+      $point  = $info['point'];
+      $buf    = substr($info['line_buffer'], 0, $point);
+
+      if ($point && $buf[$point-1] == ' ') {
+        readline_info('pending_input', chr(8));
+        readline_callback_read_char();
+        return;
+      }
 
       // Prevent empty completion request from being sent, as it would cause
       // the socket to block forever waiting for the response.
@@ -298,7 +305,8 @@ EOT;
         sort($match);
         return $match;
       }
-    });
+    };
+    readline_completion_function($completion_fn);
   }
 
   public static function fork(&$pid) {
