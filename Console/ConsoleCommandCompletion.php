@@ -261,6 +261,8 @@ class ConsoleCommandCompletion {
   }
 
   private function matchClassOrNamespace($v, $prefix) {
+    if (class_exists("$prefix\\$v"))
+      return array("$v::");
     return array_merge(
       $this->matchClass($v[0], $prefix),
       $this->matchNamespace($v[0], $prefix)
