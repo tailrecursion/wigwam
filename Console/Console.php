@@ -344,7 +344,9 @@ EOT;
 
   public static function getHistFile() {
     $path = $_SERVER['HOME']."/.console.php.history";
-    return is_writable(dirname($path)) ? $path : "/dev/null";
+    $path = is_writable(dirname($path)) ? $path : "/dev/null";
+    touch($path);
+    return $path;
   }
 
   public static function gobbleWhitespace(&$toks) {
