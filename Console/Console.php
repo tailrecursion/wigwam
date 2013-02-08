@@ -343,13 +343,13 @@ EOT;
   }
 
   public static function getHistFile() {
-    return $_SERVER['HOME']."/.console.php.history";
+    $path = $_SERVER['HOME']."/.console.php.history";
+    return is_writable(dirname($path)) ? $path : "/dev/null";
   }
 
   public static function gobbleWhitespace(&$toks) {
-    while (count($toks) && count($toks[0]) && $toks[0][0] == T_WHITESPACE) {
+    while (count($toks) && count($toks[0]) && $toks[0][0] == T_WHITESPACE)
       array_shift($toks);
-    }
   }
 
   public static function expandHistory($line) {
