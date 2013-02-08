@@ -160,6 +160,8 @@ if (isset(Console::$option['v'])) {
       preg_replace('/^[^=]+=/', '', Console::$option['v']);
 }
 
+error_reporting(E_ALL);
+
 if (isset(Console::$option['f'])) {
   if (is_array(Console::$option['f']))
     foreach (Console::$option['f'] as Console::$tmp)
