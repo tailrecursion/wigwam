@@ -1,4 +1,4 @@
-![PHP REPL](https://raw.github.com/micha/wigwam/master/php-repl.png)
+![PHP REPL](https://raw.github.com/tailrecursion/wigwam/master/php-repl.png)
 
 # The PHP REPL
 
