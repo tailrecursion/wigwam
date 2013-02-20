@@ -49,6 +49,8 @@ class Console {
   public static $welcome;
 
   public static $INTERACTIVE  = true;
+  public static $DIE_HANDLER;
+  public static $EXC_HANDLER;
 
   public static $HISTORY_RES;
   public static $HISTSIZE     = 1000;
@@ -265,21 +267,35 @@ EOT;
 
     static::$n = count(readline_list_history());
 
-    static::$HISTFILE_S = false;
-
     register_shutdown_function(function() {
-      if (! Console::$ignore_errors && $e = error_get_last())
-        Console::printFatal($e);
+      if (! Console::$ignore_errors && $e = error_get_last()) {
+        if (Console::$DIE_HANDLER) {
+          $h = Console::$DIE_HANDLER;
+          $e = array_merge(
+            array('type'=>null,'message'=>null,'file'=>null,'line',null),
+            ifnil(error_get_last(), array()));
+          $h($e['type'], $e['message'], $e['file'], $e['line']);
+        } else
+          Console::printFatal($e);
+      }
       die();
     });
 
     set_error_handler(function ($errno, $errstr, $errfile, $errline) {
-      Console::printErr($errstr, $errfile, $errline);
+      if (Console::$DIE_HANDLER) {
+        $h = Console::$DIE_HANDLER;
+        $h($errno, $errstr, $errfile, $errline);
+      } else
+        Console::printErr($errstr, $errfile, $errline);
       Console::done();
     });
 
     set_exception_handler(function($e) {
-      Console::printException($e);
+      if (Console::$EXC_HANDLER) {
+        $h = Console::$EXC_HANDLER;
+        $h($e);
+      } else
+        Console::printException($e);
       Console::done();
     });
 
@@ -478,9 +494,13 @@ EOT;
   public static function readLine() {
     if (count(static::$RUNSCRIPT)) {
       $line = array_shift(static::$RUNSCRIPT);
-      echo static::prompt()."$line";
-    } else
+      if (Console::$INTERACTIVE)
+        echo static::prompt()."$line";
+    } else {
+      if (! Console::$INTERACTIVE) 
+        exit();
       $line = static::doReadline(static::prompt());
+    }
     static::writeSock(0, 0, $line);
   }
 

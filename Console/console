@@ -170,9 +170,6 @@ if (isset(Console::$option['f'])) {
     require_once(Console::$option['f']);
 }
 
-if (! Console::$INTERACTIVE)
-  exit();
-
 Console::setup();
 
 if (isset(Console::$option['q']))
@@ -191,7 +188,8 @@ Console::$welcome = <<<EOT
 
 EOT;
 
-printf(Console::center(Console::$welcome));
+if (Console::$INTERACTIVE)
+  printf(Console::center(Console::$welcome));
 
 Console::fork(Console::$pid1);
 
