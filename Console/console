@@ -206,10 +206,14 @@ if (Console::$pid1 > 0) {
     Console::$last_time   = Console::$tmp_status[1];
     Console::$mem_usage   = Console::$tmp_status[2]/1024/1024;
 
-    if (Console::$reboot)
+    if (Console::$reboot || Console::$die)
       break;
   }
   pcntl_waitpid(Console::$pid1, Console::$status);
+
+  if (Console::$die)
+    exit();
+
   echo "\n";
   pcntl_exec(array_shift($argv), $argv);
 } else {

@@ -71,6 +71,7 @@ class Console {
 
   public static $sock         = array();
   public static $reboot       = false;
+  public static $die          = false;
   public static $pid1;
   public static $pid2;
   public static $pid3;
@@ -219,7 +220,7 @@ EOT;
     $t = $e->getTrace();
     $p = $e->getPrevious();
 
-    Console::color("red");
+    Console::color("bold-red");
 
     if ($e->getFile() != $t[0]['file'] || $e->getLine() != $t[0]['line'])
       error_log(sprintf("AT %s(%d)", $e->getFile(), $e->getLine()));
@@ -236,7 +237,7 @@ EOT;
   }
 
   public static function printErr($message, $file, $line) {
-    Console::color("red");
+    Console::color("bold-red");
     error_log(static::errMsg($message, $file, $line));
     Console::color();
   }
@@ -497,9 +498,12 @@ EOT;
       if (Console::$INTERACTIVE)
         echo static::prompt()."$line";
     } else {
-      if (! Console::$INTERACTIVE) 
-        exit();
-      $line = static::doReadline(static::prompt());
+      if (! Console::$INTERACTIVE) {
+        $line = '/q Wigwam\\Console\\Console::$die = Wigwam\\Console\\Console::$reboot = true';
+        static::$reboot = true;
+        static::$die    = true;
+      } else
+        $line = static::doReadline(static::prompt());
     }
     static::writeSock(0, 0, $line);
   }
