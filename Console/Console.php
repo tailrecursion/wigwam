@@ -579,7 +579,17 @@ EOT;
       if ($lines < count(explode("\n", $res))) {
         $scratch = $_SERVER['HOME']."/.console.php.scratch";
         file_put_contents($scratch, $res);
-        pcntl_exec("/usr/bin/env", array("less", $scratch));
+        $pid = pcntl_fork();
+        if ($pid > 0) {
+          pcntl_wait($status);
+          return;
+        } elseif (! $pid) {
+          pcntl_exec("/usr/bin/env", array("less", $scratch));
+        } else {
+          $ex = new \Exception("Can't fork.");
+          printf(static::pp($ex)."\n");
+          throw $ex;
+        }
       } else
         printf("%s\n", $res);
 
