@@ -568,13 +568,23 @@ EOT;
   }
 
   public static function printResult($res) {
-    if (static::$printnext)
-      printf(
-        ( ($hc = static::$OUTCOLOR) == -1 )
-          ? "=> %s\n"
-          : "\033[".$hc."m%s\033[0m\n", 
-        static::$printshortnext ? static::pp($res) : var_export($res, true)
-      );
+    if (static::$printnext) {
+      $lines = `tput lines`;
+      $res = static::$printshortnext
+        ? static::pp($res)
+        : var_export($res, true);
+
+      printf(static::strcolor("bold-cyan"));
+
+      if ($lines < count(explode("\n", $res))) {
+        $scratch = $_SERVER['HOME']."/.console.php.scratch";
+        file_put_contents($scratch, $res);
+        pcntl_exec("/usr/bin/env", array("less", $scratch));
+      } else
+        printf("%s\n", $res);
+
+      printf(static::strcolor());
+    }
     static::$printshortnext = static::$printshort;
     static::$printnext = static::$print;
   }
