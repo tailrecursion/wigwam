@@ -156,7 +156,14 @@ return a string (which will be evaluated) or nothing.</dd>
 
 <h2 id="FILES">FILES</h2>
 
-<p>Console makes some files.</p>
+<p>Console looks for the php file <code>~/.consolerc.php</code>. If it finds it then that
+file is loaded via <code>require_once</code> when the REPL is started. Additionally, the
+REPL can be configured via <code>.htaccess</code> files, as usual with the Apache web
+server.</p>
+
+<p>The console requires a scratch file <code>~/.console.php.scratch</code> for the pager if
+a pager is specified, and a history file <code>~/.console.php.history</code> if expression
+history is used.</p>
 
 <h2 id="COPYRIGHT">COPYRIGHT</h2>
 

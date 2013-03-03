@@ -127,7 +127,10 @@ Add a command to the REPL, accessible via \fB/\fR\fI$name\fR\. The \fI$f\fR call
 Programmatically run the REPL command \fI$line\fR\.
 .
 .SH "FILES"
-Console makes some files\.
+Console looks for the php file \fB~/\.consolerc\.php\fR\. If it finds it then that file is loaded via \fBrequire_once\fR when the REPL is started\. Additionally, the REPL can be configured via \fB\.htaccess\fR files, as usual with the Apache web server\.
+.
+.P
+The console requires a scratch file \fB~/\.console\.php\.scratch\fR for the pager if a pager is specified, and a history file \fB~/\.console\.php\.history\fR if expression history is used\.
 .
 .SH "COPYRIGHT"
 Wigwam is Copyright (C) 2012 Micha Niskin

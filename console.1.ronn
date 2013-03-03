@@ -98,7 +98,14 @@ via the `Console` and `ConsoleCommand` classes.
 
 ## FILES
 
-Console makes some files.
+Console looks for the php file `~/.consolerc.php`. If it finds it then that
+file is loaded via `require_once` when the REPL is started. Additionally, the
+REPL can be configured via `.htaccess` files, as usual with the Apache web
+server.
+
+The console requires a scratch file `~/.console.php.scratch` for the pager if
+a pager is specified, and a history file `~/.console.php.history` if expression
+history is used.
 
 ## COPYRIGHT
 

@@ -162,6 +162,9 @@ if (isset(Console::$option['v'])) {
 
 error_reporting(E_ALL);
 
+if (file_exists($_SERVER['HOME']."/.consolerc.php"))
+  require_once($_SERVER['HOME']."/.consolerc.php");
+
 if (isset(Console::$option['f'])) {
   if (is_array(Console::$option['f']))
     foreach (Console::$option['f'] as Console::$tmp)
