@@ -85,7 +85,6 @@ class ConsoleCommand {
   }
 
   public static function pager($argline) {
-    error_log(var_export($argline, true));
     Console::$PAGER = $argline;
   }
 
