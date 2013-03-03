@@ -1,0 +1,133 @@
+.\" generated with Ronn/v0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
+.
+.TH "CONSOLE" "1" "March 2013" "" ""
+.
+.SH "NAME"
+\fBconsole\fR \- A Read\-Eval\-Print\-Loop (REPL) for the PHP language\.
+.
+.SH "SYNOPSIS"
+\fBconsole\fR [\fB\-hHqz\fR] [\fB\-c\fR \fIcolor\fR] [\fB\-f\fR \fIfile\fR] [\fB\-i\fR \fIkey=val\fR] [\fB\-p\fR \fIfile\fR] [\fB\-s\fR \fIfile\fR] [\fB\-v\fR \fIvar=val\fR]
+.
+.SH "DESCRIPTION"
+\fBConsole\fR provides a REPL environment for the PHP language\.
+.
+.SH "OPTIONS"
+.
+.TP
+\fB\-c\fR \fIcolor\fR
+Return value print color (default is \fBcyan\fR)\. Choices are: \fBblack\fR, \fBred\fR, \fBgreen\fR, \fByellow\fR, \fBblue\fR, \fBmagenta\fR, \fBcyan\fR, \fBwhite\fR, and \fBnone\fR\. Bold colors can be specified as \fBbold\-\fR\fIcolor\fR\. Specify \fBnone\fR to disable colored output\.
+.
+.TP
+\fB\-f\fR \fIfile\fR
+Require \fIfile\fR before starting REPL\.
+.
+.TP
+\fB\-h\fR
+Print usage info and exit\.
+.
+.TP
+\fB\-H\fR
+Don\'t parse \.htaccess files at startup\.
+.
+.TP
+\fB\-i\fR \fIkey=val\fR
+Set PHP configuration option \fIkey\fR to \fIval\fR\.
+.
+.TP
+\fB\-p\fR \fIfile\fR
+Require \fIfile\fR before loading console\'s classloader\.
+.
+.TP
+\fB\-q\fR
+Don\'t echo the result after evaling each expression\.
+.
+.TP
+\fB\-s\fR \fIfile\fR
+Run console commands in \fIfile\fR before interactive REPL\.
+.
+.TP
+\fB\-v\fR \fIvar=val\fR
+Set \fI$var\fR to \fIval\fR globally in REPL environment\.
+.
+.TP
+\fB\-z\fR
+Run script files but don\'t start interactive REPL\.
+.
+.P
+Multiple \fB\-f\fR, \fB\-i\fR, \fB\-p\fR, and \fB\-v\fR options may be specified on the same command line\.
+.
+.SH "THE REPL ENVIRONMENT"
+The following commands are available inside the REPL environment:
+.
+.TP
+\fB/d\fR \fIthing\fR
+Get the doc comment for the \fIthing\fR\.
+.
+.TP
+\fB/e\fR [\fIfile\fR]
+Append session history to \fIfile\fR and open in editor\. If \fIfile\fR is not specified then the file specified with the \fB\-s\fR option will be used\.
+.
+.TP
+\fB/f\fR \fIfile\fR
+Load \fIfile\fR via php\'s \fBrequire()\fR\.
+.
+.TP
+\fB/h\fR
+Print this help info\.
+.
+.TP
+\fB/hh\fR
+Print expression history\.
+.
+.TP
+\fB/p\fR \fIexpr\fR
+Toggle echoing the result just for this expression\.
+.
+.TP
+\fB/pp\fR
+Toggle echoing the result of each eval\.
+.
+.TP
+\fB/pager\fR [\fIcmd\fR]
+Pipe results through shell command \fIcmd\fR when displaying them\. If no \fIcmd\fR is provided, the current pager command is removed\.
+.
+.TP
+\fB/q\fR \fIexpr\fR
+Evaluate \fIexpr\fR but don\'t display the result\.
+.
+.TP
+\fB/x\fR \fIexpr\fR
+Evaluate \fIexpr\fR and examine result (print full \fBvar_export\fR output)\.
+.
+.SH "HISTORY EXPANSION"
+History expansion is pretty standard\. \fB$$\fR is the previous expression\. \fB$0\fR, \fB$1\fR, \fB$2\fR, \.\.\. expand to expression number 0, 1, 2, etc\. Using a negative index, like \fB$\-4\fR for example, refers to the 4th previous expression\. Note that \fB$$\fR and \fB$\-1\fR are equivalent\.
+.
+.SH "PROGRAMMATIC REPL ACCESS"
+Most of the REPL functionality can be modified or accessed programmatically via the \fBConsole\fR and \fBConsoleCommand\fR classes\.
+.
+.TP
+\fBConsole::$DEBUG\fR
+Extra debugging info is pronted when this static property is \fBtrue\fR\.
+.
+.TP
+\fBConsole::$PS1\fR
+This public static property controls how the console prompt is presented\. It may contain either a printf(3) style format string or a callback function\. The format string or function should accept 3 arguments: history number, elapsed time, and memory used\. The callback function should return the string to be used as the prompt\.
+.
+.TP
+\fBConsole::$PS2\fR
+This public static property is a string to be used for the secondary (continued line) prompt\.
+.
+.TP
+\fBConsoleCommand::add(\fRstring \fI$name\fR, callable \fI$f\fR\fB)\fR
+Add a command to the REPL, accessible via \fB/\fR\fI$name\fR\. The \fI$f\fR callback should accept one argument, the rest of the command line, and it should return a string (which will be evaluated) or nothing\.
+.
+.TP
+\fBConsoleCommand::doit(\fRstring \fI$line\fR\fB)\fR
+Programmatically run the REPL command \fI$line\fR\.
+.
+.SH "FILES"
+Console makes some files\.
+.
+.SH "COPYRIGHT"
+Wigwam is Copyright (C) 2012 Micha Niskin

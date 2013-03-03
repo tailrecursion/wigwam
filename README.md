@@ -14,7 +14,9 @@ This project contains (among other things) a [read-eval-print loop](http://en.wi
 6. In-REPL tab completion and documentation for everything.
 7. Deals correctly with PHP statements vs. expressions.
 7. Optional colored output.
-8. Can be extended easily.
+7. Configurable, extensible printer for pretty-printing PHP objects.
+7. Configurable pager (pipe output through arbitrary shell command).
+8. Easily extended, with programmatic access to most REPL functionality.
 
 ### Caveats
 
@@ -44,55 +46,6 @@ $ ln -s `pwd`/console /usr/local/bin/console
 
 ### Usage
 
-```
-Usage: $name [OPTIONS]
-
-Where OPTIONS are:
-
-  -c <color>    Return value print color (default is "cyan"). Choices are:
-                [black, red, green, yellow, blue, magenta, cyan, white, none]
-                Choose "none" to disable colored output.
-  -f <file>     Require <file> before starting REPL.
-  -h            Print usage info and exit.
-  -H            Don't parse .htaccess files at startup.
-  -i <var=val>  Set PHP configuration option "var" to "val".
-  -j <prefix>   Prefix for PHP history globals (default is "_").
-  -J            Disable PHP history globals.
-  -p <file>     Require <file> before loading console's classloader.
-  -q            Don't echo the result after evaling each expression.
-  -s <file>     Run console commands in <file> before interactive REPL.
-  -v <var=val>  Set $var to "val" globally.
-  -z            Run script files but don't start interactive REPL.
-
-  Multiple -f, -i, -p, and -v options may be specified on the same command line.
-
-THE REPL ENVIRONMENT
-
-  The following commands are available inside the REPL environment:
-
-  /d <thing>    Get the doc comment for the <thing>.
-  /e [file]     Append session history to <file> and open in editor. If <file>
-                is not specified then the file specified with the -s option
-                will be used.
-  /f <file>     Require() <file>.
-  /h            Print usage info.
-  /p <expr>     Toggle echoing the result just for this expression.
-  /pp           Toggle echoing the result of each eval.
-  /q <expr>     Disable echoing the result of this expression.
-
-  Console history globals:
-
-  If PHP history globals are enabled (i.e. the -J option is not specified),
-  the expressions evaluated by the repl are numbered, starting from 1. The
-  current expression number is displayed in the prompt. The result of the
-  expression is recorded in a global variable named $_<num>, where <num> is
-  the expression number. Additionally, the result of the previous expression
-  is always assigned to $_.
-
-  If the underscore-prefixed history globals clobber something in your
-  environment, you can change the prefix to something else using the -j option,
-  or you can disable them completely with -J.
-```
 
 # The Rest Of Wigwam
 

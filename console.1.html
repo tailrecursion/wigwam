@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv='content-type' value='text/html;charset=utf8'>
+  <meta name='generator' value='Ronn/v0.7.3 (http://github.com/rtomayko/ronn/tree/0.7.3)'>
+  <title>console(1) - A Read-Eval-Print-Loop (REPL) for the PHP language.</title>
+  <style type='text/css' media='all'>
+  /* style: man */
+  body#manpage {margin:0}
+  .mp {max-width:100ex;padding:0 9ex 1ex 4ex}
+  .mp p,.mp pre,.mp ul,.mp ol,.mp dl {margin:0 0 20px 0}
+  .mp h2 {margin:10px 0 0 0}
+  .mp > p,.mp > pre,.mp > ul,.mp > ol,.mp > dl {margin-left:8ex}
+  .mp h3 {margin:0 0 0 4ex}
+  .mp dt {margin:0;clear:left}
+  .mp dt.flush {float:left;width:8ex}
+  .mp dd {margin:0 0 0 9ex}
+  .mp h1,.mp h2,.mp h3,.mp h4 {clear:left}
+  .mp pre {margin-bottom:20px}
+  .mp pre+h2,.mp pre+h3 {margin-top:22px}
+  .mp h2+pre,.mp h3+pre {margin-top:5px}
+  .mp img {display:block;margin:auto}
+  .mp h1.man-title {display:none}
+  .mp,.mp code,.mp pre,.mp tt,.mp kbd,.mp samp,.mp h3,.mp h4 {font-family:monospace;font-size:14px;line-height:1.42857142857143}
+  .mp h2 {font-size:16px;line-height:1.25}
+  .mp h1 {font-size:20px;line-height:2}
+  .mp {text-align:justify;background:#fff}
+  .mp,.mp code,.mp pre,.mp pre code,.mp tt,.mp kbd,.mp samp {color:#131211}
+  .mp h1,.mp h2,.mp h3,.mp h4 {color:#030201}
+  .mp u {text-decoration:underline}
+  .mp code,.mp strong,.mp b {font-weight:bold;color:#131211}
+  .mp em,.mp var {font-style:italic;color:#232221;text-decoration:none}
+  .mp a,.mp a:link,.mp a:hover,.mp a code,.mp a pre,.mp a tt,.mp a kbd,.mp a samp {color:#0000ff}
+  .mp b.man-ref {font-weight:normal;color:#434241}
+  .mp pre {padding:0 4ex}
+  .mp pre code {font-weight:normal;color:#434241}
+  .mp h2+pre,h3+pre {padding-left:0}
+  ol.man-decor,ol.man-decor li {margin:3px 0 10px 0;padding:0;float:left;width:33%;list-style-type:none;text-transform:uppercase;color:#999;letter-spacing:1px}
+  ol.man-decor {width:100%}
+  ol.man-decor li.tl {text-align:left}
+  ol.man-decor li.tc {text-align:center;letter-spacing:4px}
+  ol.man-decor li.tr {text-align:right;float:right}
+  </style>
+</head>
+<!--
+  The following styles are deprecated and will be removed at some point:
+  div#man, div#man ol.man, div#man ol.head, div#man ol.man.
+
+  The .man-page, .man-decor, .man-head, .man-foot, .man-title, and
+  .man-navigation should be used instead.
+-->
+<body id='manpage'>
+  <div class='mp' id='man'>
+
+  <div class='man-navigation' style='display:none'>
+    <a href="#NAME">NAME</a>
+    <a href="#SYNOPSIS">SYNOPSIS</a>
+    <a href="#DESCRIPTION">DESCRIPTION</a>
+    <a href="#OPTIONS">OPTIONS</a>
+    <a href="#THE-REPL-ENVIRONMENT">THE REPL ENVIRONMENT</a>
+    <a href="#HISTORY-EXPANSION">HISTORY EXPANSION</a>
+    <a href="#PROGRAMMATIC-REPL-ACCESS">PROGRAMMATIC REPL ACCESS</a>
+    <a href="#FILES">FILES</a>
+    <a href="#COPYRIGHT">COPYRIGHT</a>
+  </div>
+
+  <ol class='man-decor man-head man head'>
+    <li class='tl'>console(1)</li>
+    <li class='tc'></li>
+    <li class='tr'>console(1)</li>
+  </ol>
+
+  <h2 id="NAME">NAME</h2>
+<p class="man-name">
+  <code>console</code> - <span class="man-whatis">A Read-Eval-Print-Loop (REPL) for the PHP language.</span>
+</p>
+
+<h2 id="SYNOPSIS">SYNOPSIS</h2>
+
+<p><code>console</code> [<code>-hHqz</code>] [<code>-c</code> <var>color</var>] [<code>-f</code> <var>file</var>] [<code>-i</code> <var>key=val</var>] [<code>-p</code> <var>file</var>]
+[<code>-s</code> <var>file</var>] [<code>-v</code> <var>var=val</var>]</p>
+
+<h2 id="DESCRIPTION">DESCRIPTION</h2>
+
+<p><strong>Console</strong> provides a REPL environment for the PHP language.</p>
+
+<h2 id="OPTIONS">OPTIONS</h2>
+
+<dl>
+<dt><code>-c</code> <var>color</var></dt><dd>Return value print color (default is <code>cyan</code>). Choices are: <code>black</code>, <code>red</code>,
+<code>green</code>, <code>yellow</code>, <code>blue</code>, <code>magenta</code>, <code>cyan</code>, <code>white</code>, and <code>none</code>. Bold
+colors can be specified as <code>bold-</code><var>color</var>. Specify <code>none</code> to disable
+colored output.</dd>
+<dt class="flush"><code>-f</code> <var>file</var></dt><dd>Require <var>file</var> before starting REPL.</dd>
+<dt class="flush"><code>-h</code></dt><dd>Print usage info and exit.</dd>
+<dt class="flush"><code>-H</code></dt><dd>Don't parse .htaccess files at startup.</dd>
+<dt><code>-i</code> <var>key=val</var></dt><dd>Set PHP configuration option <var>key</var> to <var>val</var>.</dd>
+<dt class="flush"><code>-p</code> <var>file</var></dt><dd>Require <var>file</var> before loading console's classloader.</dd>
+<dt class="flush"><code>-q</code></dt><dd>Don't echo the result after evaling each expression.</dd>
+<dt class="flush"><code>-s</code> <var>file</var></dt><dd>Run console commands in <var>file</var> before interactive REPL.</dd>
+<dt><code>-v</code> <var>var=val</var></dt><dd>Set <var>$var</var> to <var>val</var> globally in REPL environment.</dd>
+<dt class="flush"><code>-z</code></dt><dd>Run script files but don't start interactive REPL.</dd>
+</dl>
+
+
+<p>  Multiple <code>-f</code>, <code>-i</code>, <code>-p</code>, and <code>-v</code> options may be specified on the same
+  command line.</p>
+
+<h2 id="THE-REPL-ENVIRONMENT">THE REPL ENVIRONMENT</h2>
+
+<p>The following commands are available inside the REPL environment:</p>
+
+<dl>
+<dt><code>/d</code> <var>thing</var></dt><dd>Get the doc comment for the <var>thing</var>.</dd>
+<dt><code>/e</code> [<var>file</var>]</dt><dd>Append session history to <var>file</var> and open in editor. If <var>file</var> is not
+specified then the file specified with the <code>-s</code> option will be used.</dd>
+<dt class="flush"><code>/f</code> <var>file</var></dt><dd>Load <var>file</var> via php's <code>require()</code>.</dd>
+<dt class="flush"><code>/h</code></dt><dd>Print this help info.</dd>
+<dt class="flush"><code>/hh</code></dt><dd>Print expression history.</dd>
+<dt class="flush"><code>/p</code> <var>expr</var></dt><dd>Toggle echoing the result just for this expression.</dd>
+<dt class="flush"><code>/pp</code></dt><dd>Toggle echoing the result of each eval.</dd>
+<dt><code>/pager</code> [<var>cmd</var>]</dt><dd>Pipe results through shell command <var>cmd</var> when displaying them. If no <var>cmd</var>
+is provided, the current pager command is removed.</dd>
+<dt class="flush"><code>/q</code> <var>expr</var></dt><dd>Evaluate <var>expr</var> but don't display the result.</dd>
+<dt class="flush"><code>/x</code> <var>expr</var></dt><dd>Evaluate <var>expr</var> and examine result (print full <code>var_export</code> output).</dd>
+</dl>
+
+
+<h2 id="HISTORY-EXPANSION">HISTORY EXPANSION</h2>
+
+<p>History expansion is pretty standard. <code>$$</code> is the previous expression. <code>$0</code>,
+<code>$1</code>, <code>$2</code>, ... expand to expression number 0, 1, 2, etc. Using a negative
+index, like <code>$-4</code> for example, refers to the 4th previous expression. Note
+that <code>$$</code> and <code>$-1</code> are equivalent.</p>
+
+<h2 id="PROGRAMMATIC-REPL-ACCESS">PROGRAMMATIC REPL ACCESS</h2>
+
+<p>Most of the REPL functionality can be modified or accessed programmatically
+via the <code>Console</code> and <code>ConsoleCommand</code> classes.</p>
+
+<dl>
+<dt><code>Console::$DEBUG</code></dt><dd>Extra debugging info is pronted when this static property is <code>true</code>.</dd>
+<dt><code>Console::$PS1</code></dt><dd>This public static property controls how the console prompt is presented.
+It may contain either a <span class="man-ref">printf<span class="s">(3)</span></span> style format string or a callback
+function. The format string or function should accept 3 arguments: history
+number, elapsed time, and memory used. The callback function should return
+the string to be used as the prompt.</dd>
+<dt><code>Console::$PS2</code></dt><dd>This public static property is a string to be used for the secondary
+(continued line) prompt.</dd>
+<dt><code>ConsoleCommand::add(</code>string <var>$name</var>, callable <var>$f</var><code>)</code></dt><dd>Add a command to the REPL, accessible via <code>/</code><var>$name</var>. The <var>$f</var> callback
+should accept one argument, the rest of the command line, and it should
+return a string (which will be evaluated) or nothing.</dd>
+<dt><code>ConsoleCommand::doit(</code>string <var>$line</var><code>)</code></dt><dd>Programmatically run the REPL command <var>$line</var>.</dd>
+</dl>
+
+
+<h2 id="FILES">FILES</h2>
+
+<p>Console makes some files.</p>
+
+<h2 id="COPYRIGHT">COPYRIGHT</h2>
+
+<p>Wigwam is Copyright (C) 2012 Micha Niskin</p>
+
+
+  <ol class='man-decor man-foot man foot'>
+    <li class='tl'></li>
+    <li class='tc'>March 2013</li>
+    <li class='tr'>console(1)</li>
+  </ol>
+
+  </div>
+</body>
+</html>

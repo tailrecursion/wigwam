@@ -1,0 +1,105 @@
+console(1) -- A Read-Eval-Print-Loop (REPL) for the PHP language.
+=================================================================
+
+## SYNOPSIS
+
+`console` [`-hHqz`] [`-c` <color>] [`-f` <file>] [`-i` <key=val>] [`-p` <file>]
+[`-s` <file>] [`-v` <var=val>]
+
+## DESCRIPTION
+
+**Console** provides a REPL environment for the PHP language.
+
+## OPTIONS
+
+  * `-c` <color>:
+    Return value print color (default is `cyan`). Choices are: `black`, `red`,
+    `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`, and `none`. Bold
+    colors can be specified as `bold-`<color>. Specify `none` to disable
+    colored output.
+  * `-f` <file>:
+    Require <file> before starting REPL.
+  * `-h`:
+    Print usage info and exit.
+  * `-H`:
+    Don't parse .htaccess files at startup.
+  * `-i` <key=val>:
+    Set PHP configuration option <key> to <val>.
+  * `-p` <file>:
+    Require <file> before loading console's classloader.
+  * `-q`:
+    Don't echo the result after evaling each expression.
+  * `-s` <file>:
+    Run console commands in <file> before interactive REPL.
+  * `-v` <var=val>:
+    Set <$var> to <val> globally in REPL environment.
+  * `-z`:
+    Run script files but don't start interactive REPL.
+
+  Multiple `-f`, `-i`, `-p`, and `-v` options may be specified on the same
+  command line.
+
+## THE REPL ENVIRONMENT
+
+The following commands are available inside the REPL environment:
+
+  * `/d` <thing>:
+    Get the doc comment for the <thing>.
+  * `/e` [<file>]:
+    Append session history to <file> and open in editor. If <file> is not
+    specified then the file specified with the `-s` option will be used.
+  * `/f` <file>:
+    Load <file> via php's `require()`.
+  * `/h`:
+    Print this help info.
+  * `/hh`:
+    Print expression history.
+  * `/p` <expr>:
+    Toggle echoing the result just for this expression.
+  * `/pp`:
+    Toggle echoing the result of each eval.
+  * `/pager` [<cmd>]:
+    Pipe results through shell command <cmd> when displaying them. If no <cmd>
+    is provided, the current pager command is removed.
+  * `/q` <expr>:
+    Evaluate <expr> but don't display the result.
+  * `/x` <expr>:
+    Evaluate <expr> and examine result (print full `var_export` output).
+
+## HISTORY EXPANSION
+
+History expansion is pretty standard. `$$` is the previous expression. `$0`,
+`$1`, `$2`, ... expand to expression number 0, 1, 2, etc. Using a negative
+index, like `$-4` for example, refers to the 4th previous expression. Note
+that `$$` and `$-1` are equivalent.
+
+## PROGRAMMATIC REPL ACCESS
+
+Most of the REPL functionality can be modified or accessed programmatically
+via the `Console` and `ConsoleCommand` classes.
+
+  * `Console::$DEBUG`:
+    Extra debugging info is pronted when this static property is `true`.
+  * `Console::$PS1`:
+    This public static property controls how the console prompt is presented.
+    It may contain either a printf(3) style format string or a callback
+    function. The format string or function should accept 3 arguments: history
+    number, elapsed time, and memory used. The callback function should return
+    the string to be used as the prompt.
+  * `Console::$PS2`:
+    This public static property is a string to be used for the secondary
+    (continued line) prompt.
+  * `ConsoleCommand::add(`string <$name>, callable <$f>`)`:
+    Add a command to the REPL, accessible via `/`<$name>. The <$f> callback
+    should accept one argument, the rest of the command line, and it should
+    return a string (which will be evaluated) or nothing.
+  * `ConsoleCommand::doit(`string <$line>`)`:
+    Programmatically run the REPL command <$line>.
+
+## FILES
+
+Console makes some files.
+
+## COPYRIGHT
+
+Wigwam is Copyright (C) 2012 Micha Niskin
