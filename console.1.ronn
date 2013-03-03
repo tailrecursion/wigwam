@@ -82,7 +82,7 @@ Most of the REPL functionality can be modified or accessed programmatically
 via the `Console` and `ConsoleCommand` classes.
 
   * `Console::$DEBUG`:
-    Extra debugging info is pronted when this static property is `true`.
+    Extra debugging info is printed when this static property is `true`.
   * `Console::$PAGER`:
     Shell command to pipe results through (e.g. "tee /tmp/foo | more").
   * `Console::$PS1`:
