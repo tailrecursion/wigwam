@@ -45,7 +45,7 @@ class Console {
   public static $n            = 0;
   public static $PS1          = "[%s] [%.3fs] [%.1fMB]\n>>> ";
   public static $PS2          = '+++ ';
-  public static $OUTCOLOR     = 36;
+  public static $OUTCOLOR     = '1;36';
   public static $welcome;
 
   public static $INTERACTIVE  = true;
@@ -190,7 +190,8 @@ EOT;
   }
 
   public static function color($color="none") {
-    printf(static::strcolor($color));
+    if (static::$OUTCOLOR != -1)
+      printf(static::strcolor($color));
   }
 
   public static function center($s) {
@@ -567,6 +568,11 @@ EOT;
     return $ret;
   }
 
+  public static function outColor() {
+    if (static::$INTERACTIVE && static::$OUTCOLOR != -1)
+      printf("\033[%sm", static::$OUTCOLOR);
+  }
+
   public static function printResult($res) {
     if (static::$printnext) {
       $lines = `tput lines`;
@@ -574,9 +580,10 @@ EOT;
         ? static::pp($res)
         : var_export($res, true);
 
-      printf(static::strcolor("bold-cyan"));
+      static::outColor();
 
-      if ($lines < count(explode("\n", $res))) {
+      if (static::$INTERACTIVE && $lines < count(explode("\n", $res))
+          && is_writable($_SERVER['HOME'])) {
         $scratch = $_SERVER['HOME']."/.console.php.scratch";
         file_put_contents($scratch, $res);
         $pid = pcntl_fork();
@@ -593,7 +600,7 @@ EOT;
       } else
         printf("%s\n", $res);
 
-      printf(static::strcolor());
+      static::color();
     }
     static::$printshortnext = static::$printshort;
     static::$printnext = static::$print;
