@@ -59,6 +59,9 @@ class Console {
   public static $SCRIPTFILE   = "";
   public static $RUNSCRIPT    = array();
 
+  public static $SH;
+  public static $PAGER;
+
   public static $DEBUG        = false;
 
   public static $getopt       = "f:q";
@@ -253,6 +256,7 @@ EOT;
 
     error_reporting(0);
 
+    static::$SH = trim(`which sh`);
     static::getSocks();
 
     static::$argv = $argv;
@@ -576,15 +580,13 @@ EOT;
 
   public static function printResult($res) {
     if (static::$printnext) {
-      $lines = `tput lines`;
       $res = static::$printshortnext
         ? static::pp($res)
         : var_export($res, true);
 
       static::outColor();
 
-      if (static::$INTERACTIVE && $lines < count(explode("\n", $res))
-          && is_writable($_SERVER['HOME'])) {
+      if (static::$INTERACTIVE && static::$PAGER && is_writable($_SERVER['HOME'])) {
         $scratch = $_SERVER['HOME']."/.console.php.scratch";
         file_put_contents($scratch, $res);
         $pid = pcntl_fork();
@@ -592,7 +594,8 @@ EOT;
           pcntl_wait($status);
           return;
         } elseif (! $pid) {
-          pcntl_exec("/usr/bin/env", array("less", $scratch));
+          $cmd = sprintf("cat %s |%s", escapeshellarg($scratch), static::$PAGER);
+          pcntl_exec(static::$SH, array("-c", $cmd));
         } else {
           $ex = new \Exception("Can't fork.");
           printf(static::pp($ex)."\n");

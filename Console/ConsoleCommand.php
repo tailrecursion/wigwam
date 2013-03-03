@@ -58,14 +58,23 @@ function docForClassProperty($class, $v) {
 }
 
 class ConsoleCommand {
+  public static $CMD = array();
+
+  public static function add($name, $f) {
+    static::$CMD[$name] = $f;
+  }
 
   public static function doit($line) {
     if (! preg_match('/^\\/([^\\s\/]*)(\s+(.*))?$/', $line, $m))
       return $line;
 
+    $cmd = static::$CMD;
+
     $argline = isset($m[3]) ? $m[3] : null;
 
-    if (method_exists(get_called_class(), $m[1]))
+    if (array_key_exists($m[1], $cmd))
+      return $cmd[$m[1]]($argline);
+    elseif (method_exists(get_called_class(), $m[1]))
       return self::$m[1]($argline);
 
     throw new RuntimeException("No such console command: '{$m[1]}'");
@@ -73,6 +82,11 @@ class ConsoleCommand {
 
   public static function pp() {
     Console::$print = Console::$printnext = (! Console::$print);
+  }
+
+  public static function pager($argline) {
+    error_log(var_export($argline, true));
+    Console::$PAGER = $argline;
   }
 
   public static function p($argline) {
@@ -91,55 +105,14 @@ class ConsoleCommand {
   }
 
   public static function h($argline) {
-    global $argv;
-    $name = basename($argv[0]);
-    $help = <<<EOT
-
-Usage: $name [OPTIONS]
-
-Where OPTIONS are:
-
-  -c <color>    Return value print color (default is "cyan"). Choices are:
-                [black, red, green, yellow, blue, magenta, cyan, white, none]
-                Choose "none" to disable colored output.
-  -f <file>     Require <file> before starting REPL.
-  -h            Print usage info and exit.
-  -H            Don't parse .htaccess files at startup.
-  -i <var=val>  Set PHP configuration option "var" to "val".
-  -p <file>     Require <file> before loading console's classloader.
-  -q            Don't echo the result after evaling each expression.
-  -s <file>     Run console commands in <file> before interactive REPL.
-  -v <var=val>  Set \$var to "val" globally.
-  -z            Run script files but don't start interactive REPL.
-
-  Multiple -f, -i, -p, and -v options may be specified on the same command line.
-
-THE REPL ENVIRONMENT
-
-  The following commands are available inside the REPL environment:
-
-  /d <thing>    Get the doc comment for the <thing>.
-  /e [file]     Append session history to <file> and open in editor. If <file>
-                is not specified then the file specified with the -s option
-                will be used.
-  /f <file>     Require() <file>.
-  /h            Print usage info.
-  /hh           Print expression history.
-  /p <expr>     Toggle echoing the result just for this expression.
-  /pp           Toggle echoing the result of each eval.
-  /q <expr>     Disable echoing the result of this expression.
-  /x <expr>     Examine result (print full var_export output).
-
-HISTORY EXPANSION
-
-  History expansion is pretty standard. \$\$ is the previous expression. \$0,
-  \$1, \$2, ... expand to expression number 0, 1, 2, etc. Using a negative
-  index, like \$-4 for example, refers to the 4th previous expression. Note
-  that \$\$ and \$-1 are equivalent.
-
-EOT;
-
-    echo "$help\n";
+    Console::color();
+    $pid = pcntl_fork();
+    if (! $pid)
+      pcntl_exec(trim(`which man`), array(dirname(__DIR__)."/console.1"));
+    elseif ($pid > 0)
+      pcntl_wait($status);
+    else
+      return 'throw new Exception("Can\'t fork.")';
     return '';
   }
 
