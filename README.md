@@ -46,7 +46,7 @@ $ ln -s `pwd`/console /usr/local/bin/console
 
 ### Usage
 
-See the man page (here)[http://tailrecursion.github.com/wigwam/console.1.html].
+See the man page [here](http://tailrecursion.github.com/wigwam/console.1.html).
 
 # The Rest Of Wigwam
 
