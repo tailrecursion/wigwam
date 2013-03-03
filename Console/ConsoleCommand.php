@@ -132,6 +132,10 @@ class ConsoleCommand {
     return "require '$f'";
   }
 
+  public static function z($argline) {
+    return new DateTime();
+  }
+
   public static function d($argline) {
     $T_PREFIX = ConsoleCommandCompletion::T_PREFIX;
     $T_CLASS  = ConsoleCommandCompletion::T_CLASS;

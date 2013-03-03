@@ -105,6 +105,9 @@ class ClassLoader {
    * @return array The list of subdirectories.
    */
   private static function listSubDirs($dir) {
+    if (static::cacheFetch($data))
+      return $data;
+
     $ret = array();
 
     if ($dh = opendir($dir))
@@ -112,7 +115,7 @@ class ClassLoader {
         if (is_dir("$dir/$d") && ! preg_match('/^\\.\\.?$/', $d))
           array_push($ret, $d);
 
-    return $ret;
+    return static::cacheStore($ret);
   }
 
   /**
@@ -125,17 +128,20 @@ class ClassLoader {
    * @return array The list of namespaces and classes (as applicable).
    */
   private static function listSubnamespaces($prefix='', $class=false) {
+    if (static::cacheFetch($data))
+      return $data;
+
     $p = $prefix ? trim($prefix, '\\').'\\' : $prefix;
     $c = static::listKnownClasses();
 
-    return array_reduce($c, function($xs, $x) use ($p, $class) {
+    return static::cacheStore(array_reduce($c, function($xs, $x) use ($p, $class) {
       $a = explode('\\', substr($x, strlen($p)));
       if (preg_match('/^'.preg_quote($p, '/').'/', $x) 
         && ((!$class && count($a) > 1) || ($class && count($a) == 1))
         && !in_array($a[0], $xs))
         array_push($xs, $a[0]);
       return $xs;
-    }, array());
+    }, array()));
   }
 
   /**
@@ -150,9 +156,72 @@ class ClassLoader {
       require_once($f);
   }
 
+  /**
+   * Generate a unique key for memoization. This key will be unique up to
+   * function name, class, and arguments.
+   *
+   * @return string The key.
+   */
+  private static function doTrace() {
+    $trace = debug_backtrace();
+
+    if (count($trace) < 3)
+      throw new \Exception("not enough items in backtrace");
+
+    $trace = $trace[2];
+
+    unset($trace['file']);
+    unset($trace['line']);
+    unset($trace['object']);
+    
+    return md5(json_encode($trace));
+  }
+
   /*************************************************************************** 
    *** PUBLIC METHODS                                                      *** 
    ***************************************************************************/
+
+  /**
+   * Attempt to fetch memoized data from the cache.
+   *
+   * @param &$data The result is stored here if item is cached.
+   * @return boolean True if item was in cache.
+   */
+  public static function cacheFetch(&$data) {
+    $key = static::doTrace();
+    $now = new \DateTime();
+    if (array_key_exists($key, static::$CACHE)) {
+      $cache  = static::$CACHE[$key];
+      $expire = $cache['expire'];
+      $data   = $cache['data'];
+      if (is_null($expire) || $expire > $now)
+        return true;
+      elseif ($expire <= $now)
+        unset(static::$CACHE[$key]);
+    }
+  }
+
+  /**
+   * Store a value in the cache.
+   *
+   * @param mixed $data The value to store.
+   * @param string $ttl A DateTime modification string (time to live).
+   * @return mixed The data.
+   */
+  public static function cacheStore($data, $ttl=NULL) {
+    $expire = new \DateTime();
+    static::$CACHE[static::doTrace()] = array(
+      'expire'  => is_null($ttl) ? $ttl : $expire->modify("+{$ttl}"),
+      'data'    => $data,
+    );
+    return $data;
+  }
+
+  public static function cacheTest($foo, $bar) {
+    if (static::cacheFetch($data))
+      return $data;
+    return static::cacheStore(new \DateTime(), '10 seconds');
+  }
 
   /**
    * Constructor registers the autoload handler.
@@ -189,6 +258,9 @@ class ClassLoader {
    * @return string The class definition file.
    */
   public static function findClassDefFile($class) {
+    if (static::cacheFetch($data))
+      return $data;
+
     $root     = __DIR__;
     $relpath  = str_replace('\\', '/', $class).'.php';
     $ns       = strstr($relpath, '/', true);
@@ -199,24 +271,23 @@ class ClassLoader {
 
     if ($ns == "Wigwam") {
       if (file_exists( ($f = "$root".substr($relpath, strlen("Wigwam"))) ))
-        return $f;
+        return static::cacheStore($f);
       elseif (count( ($vend_glob = glob("$root/vendor/*/$relpath")) ))
-        return $vend_glob[0];
+        return static::cacheStore($vend_glob[0]);
     }
 
     foreach (static::$paths as $path)
       if (file_exists("$path/$relpath"))
-        return "$path/$relpath";
+        return static::cacheStore("$path/$relpath");
 
     foreach (static::$exact_paths as $path)
       if (basename($path)==$ns && file_exists(dirname($path)."/$relpath"))
-        return dirname($path)."/$relpath";
+        return static::cacheStore(dirname($path)."/$relpath");
 
     foreach (static::$exact_path_aliases as $alias => $path)
       if (! strncmp($relpath, "$alias/", strlen("$alias/"))
         && file_exists( ($f = "$path".substr($relpath, strlen($alias))) ))
-        return $f;
-
+        return static::cacheStore($f);
   }
 
   /**
@@ -226,10 +297,13 @@ class ClassLoader {
    * @return array The list of fully-qualified class names.
    */
   public static function listKnownClasses() {
-    return array_unique(array_merge(
+    if (static::cacheFetch($data))
+      return $data;
+
+    return static::cacheStore(array_unique(array_merge(
       static::listDeclaredClasses(),
       static::listLoadableClasses()
-    ));
+    )));
   }
 
   /**
@@ -239,14 +313,15 @@ class ClassLoader {
    * @return array The list of fully-qualified class names.
    */
   public static function listLoadableClasses() {
-    if (! array_key_exists('listLoadableClasses', self::$CACHE))
-      self::$CACHE['listLoadableClasses'] = array_unique(array_merge(
-        static::listWigwamClasses(),
-        static::listPathClasses(),
-        static::listExactPathClasses(),
-        static::listExactPathAliasClasses()
-      ));
-    return self::$CACHE['listLoadableClasses'];
+    if (static::cacheFetch($data))
+      return $data;
+
+    return static::cacheStore(array_unique(array_merge(
+      static::listWigwamClasses(),
+      static::listPathClasses(),
+      static::listExactPathClasses(),
+      static::listExactPathAliasClasses()
+    )));
   }
 
   /**
@@ -264,6 +339,9 @@ class ClassLoader {
    * @return array The list of fully-qualified class names.
    */
   public static function listClassesInDir($dir, $prefix='', $prune=array()) {
+    if (static::cacheFetch($data))
+      return $data;
+
     $ret = array();
     $d   = new RecursiveDirectoryIterator($dir);
     $i   = new RecursiveIteratorIterator($d);
@@ -278,13 +356,13 @@ class ClassLoader {
       array_push($ret, $p);
     }
 
-    return array_map(function($x) use ($dir, $prefix) {
+    return static::cacheStore(array_map(function($x) use ($dir, $prefix) {
       $x = preg_replace('/^'.preg_quote("$dir/", '/').'/', "$prefix/", $x);
       $x = preg_replace('/\\//', '\\', $x);
       $x = preg_replace('/^\\\\/', '', $x);
       $x = preg_replace('/\\.php$/', '', $x);
       return $x;
-    }, $ret);
+    }, $ret));
   }
 
   /**
@@ -295,7 +373,10 @@ class ClassLoader {
    * @return array The list of fully-qualified class names.
    */
   public static function listDeclaredClasses() {
-    return get_declared_classes();
+    if (static::cacheFetch($data))
+      return $data;
+
+    return static::cacheStore(get_declared_classes());
   }
 
   /**
@@ -307,7 +388,10 @@ class ClassLoader {
    * @return array The list of fully-qualified class names.
    */
   public static function listWigwamClasses() {
-    return static::listClassesInDir(__DIR__, 'Wigwam', array('vendor'));
+    if (static::cacheFetch($data))
+      return $data;
+
+    return static::cacheStore(static::listClassesInDir(__DIR__, 'Wigwam', array('vendor')));
   }
 
   /**
@@ -317,10 +401,13 @@ class ClassLoader {
    * @return array The list of fully-qualified class names.
    */
   public static function listPathClasses() {
-    return array_reduce(static::$paths, function($xs, $x) {
+    if (static::cacheFetch($data))
+      return $data;
+
+    return static::cacheStore(array_reduce(static::$paths, function($xs, $x) {
       $xs = array_merge($xs, ClassLoader::listClassesInDir($x));
       return $xs;
-    }, array());
+    }, array()));
   }
 
   /**
@@ -330,7 +417,10 @@ class ClassLoader {
    * @return array The list of fully-qualified class names.
    */
   public static function listExactPathClasses() {
-    return array_reduce(static::$exact_paths, function($xs, $x) {
+    if (static::cacheFetch($data))
+      return $data;
+
+    return static::cacheStore(array_reduce(static::$exact_paths, function($xs, $x) {
       $dn = dirname($x);
       $bn = basename($x);
       $prune = array_diff(ClassLoader::listSubDirs($dn), array($bn));
@@ -338,7 +428,7 @@ class ClassLoader {
         return "$bn\\$x";
       }, ClassLoader::listClassesInDir($x, $prune)));
       return $xs;
-    }, array());
+    }, array()));
   }
 
   /**
@@ -348,6 +438,9 @@ class ClassLoader {
    * @return array The list of fully-qualified class names.
    */
   public static function listExactPathAliasClasses() {
+    if (static::cacheFetch($data))
+      return $data;
+
     $ret = array();
 
     foreach (static::$exact_path_aliases as $a => $p) {
@@ -359,7 +452,7 @@ class ClassLoader {
                 }, ClassLoader::listClassesInDir($p, $prune)));
     }
 
-    return $ret;
+    return static::cacheStore($ret);
   }
 
   /**
@@ -370,7 +463,10 @@ class ClassLoader {
    * @return array The list of sub-namespaces.
    */
   public static function listNamespacesInNamespace($ns='') {
-    return static::listSubnamespaces($ns, false);
+    if (static::cacheFetch($data))
+      return $data;
+
+    return static::cacheStore(static::listSubnamespaces($ns, false));
   }
 
   /**
@@ -381,7 +477,10 @@ class ClassLoader {
    * @return array The list of class names.
    */
   public static function listClassesInNamespace($ns='') {
-    return static::listSubnamespaces($ns, true);
+    if (static::cacheFetch($data))
+      return $data;
+
+    return static::cacheStore(static::listSubnamespaces($ns, true));
   }
 
   /**
