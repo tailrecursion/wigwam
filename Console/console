@@ -71,7 +71,6 @@ use Wigwam\Console\ConsoleCommand;
 if (! class_exists('Wigwam\\ClassLoader'))
   require_once('Wigwam/ClassLoader.php');
 
-
 Console::$printers['ArrayIterator'] = function($o) {
   return sprintf(
     "#<%s %s>",
@@ -122,7 +121,7 @@ Console::$HISTFILE_S = $_SERVER['HOME']."/.console.php.history.session";
 
 Console::setup();
 
-Console::$option = getopt('c:f:i:p:v:hHqs:z');
+Console::$option = getopt('Ac:f:i:p:v:hHqs:z');
 
 if (isset(Console::$option['z']))
   Console::$INTERACTIVE = false;
@@ -191,8 +190,12 @@ Console::$welcome = <<<EOT
 
 EOT;
 
-if (Console::$INTERACTIVE)
+if (Console::$INTERACTIVE) {
+  if (! isset(Console::$option['A']))
+    Wigwam\ClassLoader::preloadCache();
+  Console::color();
   printf(Console::center(Console::$welcome));
+}
 
 Console::fork(Console::$pid1);
 

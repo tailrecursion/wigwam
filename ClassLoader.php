@@ -291,6 +291,13 @@ class ClassLoader {
   }
 
   /**
+   * Preloads the cache with class info.
+   */
+  public static function preloadCache() {
+    static::listKnownClasses();
+  }
+
+  /**
    * Returns array containing the fully-qualified names of all classes that can
    * be loaded by the classloader.
    *

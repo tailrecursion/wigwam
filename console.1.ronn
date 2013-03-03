@@ -12,6 +12,9 @@ console(1) -- A Read-Eval-Print-Loop (REPL) for the PHP language.
 
 ## OPTIONS
 
+  * `-A`:
+    Don't preload tab-completion cache---console starts up a little faster but
+    tab completion is a little slower.
   * `-c` <color>:
     Return value print color (default is `cyan`). Choices are: `black`, `red`,
     `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`, and `none`. Bold
