@@ -95,7 +95,7 @@ colors can be specified as <code>bold-</code><var>color</var>. Specify <code>non
 colored output.</dd>
 <dt class="flush"><code>-f</code> <var>file</var></dt><dd>Require <var>file</var> before starting REPL.</dd>
 <dt class="flush"><code>-h</code></dt><dd>Print usage info and exit.</dd>
-<dt class="flush"><code>-H</code></dt><dd>Don't parse .htaccess files at startup.</dd>
+<dt class="flush"><code>-H</code></dt><dd>Don't parse <code>.htaccess</code> files at startup.</dd>
 <dt><code>-i</code> <var>key=val</var></dt><dd>Set PHP configuration option <var>key</var> to <var>val</var>.</dd>
 <dt class="flush"><code>-p</code> <var>file</var></dt><dd>Require <var>file</var> before loading console's classloader.</dd>
 <dt class="flush"><code>-q</code></dt><dd>Don't echo the result after evaling each expression.</dd>
@@ -142,13 +142,19 @@ via the <code>Console</code> and <code>ConsoleCommand</code> classes.</p>
 
 <dl>
 <dt><code>Console::$DEBUG</code></dt><dd>Extra debugging info is pronted when this static property is <code>true</code>.</dd>
+<dt><code>Console::$PAGER</code></dt><dd>Shell command to pipe results through (e.g. "tee /tmp/foo | more").</dd>
 <dt><code>Console::$PS1</code></dt><dd>This public static property controls how the console prompt is presented.
-It may contain either a <span class="man-ref">printf<span class="s">(3)</span></span> style format string or a callback
+It may contain either a <code>printf(</code>3<code>)</code> style format string or a callback
 function. The format string or function should accept 3 arguments: history
 number, elapsed time, and memory used. The callback function should return
 the string to be used as the prompt.</dd>
 <dt><code>Console::$PS2</code></dt><dd>This public static property is a string to be used for the secondary
 (continued line) prompt.</dd>
+<dt><code>Console::$printers</code></dt><dd>This is an array whose keys are class names and whose values are functions.
+When the console displays an object of the given class, the function will
+be called with one argument---the class name. The function should return the
+string to be printed. If a printer is not found for the object's class, then
+the printer for its parent class is used, if one exists, and so on.</dd>
 <dt><code>ConsoleCommand::add(</code>string <var>$name</var>, callable <var>$f</var><code>)</code></dt><dd>Add a command to the REPL, accessible via <code>/</code><var>$name</var>. The <var>$f</var> callback
 should accept one argument, the rest of the command line, and it should
 return a string (which will be evaluated) or nothing.</dd>

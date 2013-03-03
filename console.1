@@ -32,7 +32,7 @@ Print usage info and exit\.
 .
 .TP
 \fB\-H\fR
-Don\'t parse \.htaccess files at startup\.
+Don\'t parse \fB\.htaccess\fR files at startup\.
 .
 .TP
 \fB\-i\fR \fIkey=val\fR
@@ -115,12 +115,20 @@ Most of the REPL functionality can be modified or accessed programmatically via 
 Extra debugging info is pronted when this static property is \fBtrue\fR\.
 .
 .TP
+\fBConsole::$PAGER\fR
+Shell command to pipe results through (e\.g\. "tee /tmp/foo | more")\.
+.
+.TP
 \fBConsole::$PS1\fR
-This public static property controls how the console prompt is presented\. It may contain either a printf(3) style format string or a callback function\. The format string or function should accept 3 arguments: history number, elapsed time, and memory used\. The callback function should return the string to be used as the prompt\.
+This public static property controls how the console prompt is presented\. It may contain either a \fBprintf(\fR3\fB)\fR style format string or a callback function\. The format string or function should accept 3 arguments: history number, elapsed time, and memory used\. The callback function should return the string to be used as the prompt\.
 .
 .TP
 \fBConsole::$PS2\fR
 This public static property is a string to be used for the secondary (continued line) prompt\.
+.
+.TP
+\fBConsole::$printers\fR
+This is an array whose keys are class names and whose values are functions\. When the console displays an object of the given class, the function will be called with one argument\-\-\-the class name\. The function should return the string to be printed\. If a printer is not found for the object\'s class, then the printer for its parent class is used, if one exists, and so on\.
 .
 .TP
 \fBConsoleCommand::add(\fRstring \fI$name\fR, callable \fI$f\fR\fB)\fR

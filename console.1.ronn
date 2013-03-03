@@ -25,7 +25,7 @@ console(1) -- A Read-Eval-Print-Loop (REPL) for the PHP language.
   * `-h`:
     Print usage info and exit.
   * `-H`:
-    Don't parse .htaccess files at startup.
+    Don't parse `.htaccess` files at startup.
   * `-i` <key=val>:
     Set PHP configuration option <key> to <val>.
   * `-p` <file>:
@@ -83,15 +83,23 @@ via the `Console` and `ConsoleCommand` classes.
 
   * `Console::$DEBUG`:
     Extra debugging info is pronted when this static property is `true`.
+  * `Console::$PAGER`:
+    Shell command to pipe results through (e.g. "tee /tmp/foo | more").
   * `Console::$PS1`:
     This public static property controls how the console prompt is presented.
-    It may contain either a printf(3) style format string or a callback
+    It may contain either a `printf(`3`)` style format string or a callback
     function. The format string or function should accept 3 arguments: history
     number, elapsed time, and memory used. The callback function should return
     the string to be used as the prompt.
   * `Console::$PS2`:
     This public static property is a string to be used for the secondary
     (continued line) prompt.
+  * `Console::$printers`:
+    This is an array whose keys are class names and whose values are functions.
+    When the console displays an object of the given class, the function will
+    be called with one argument---the class name. The function should return the
+    string to be printed. If a printer is not found for the object's class, then
+    the printer for its parent class is used, if one exists, and so on.
   * `ConsoleCommand::add(`string <$name>, callable <$f>`)`:
     Add a command to the REPL, accessible via `/`<$name>. The <$f> callback
     should accept one argument, the rest of the command line, and it should
