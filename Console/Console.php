@@ -144,6 +144,7 @@ class Console {
 
     $expr = <<<EOT
       try {
+        Wigwam\\Console\\Console::color("bold-white");
         Wigwam\\Console\\Console::\$tmp_result = eval(Wigwam\\Console\\Console::getLine());
       } catch (\\Exception \$__NAME__) {
         Wigwam\\Console\\Console::printResult(\$__NAME__);
