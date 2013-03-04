@@ -401,6 +401,10 @@ EOT;
           return static::expandHistory(
             substr_replace_first(
               $line, "\$\$", $h[count($h)-1]));
+        if ($toks[$i+1] == '!')
+          return static::expandHistory(
+            substr_replace_first(
+              $line, "\$!", "Wigwam\\Console\\Console::\$result"));
         if ($i < count($toks)-2 && $toks[$i+1] == '-' &&
           ! is_null($n = num_tok($toks[$i+2])))
           return static::expandHistory(

@@ -72,12 +72,21 @@ class ConsoleCommand {
 
     $argline = isset($m[3]) ? $m[3] : null;
 
-    if (array_key_exists($m[1], $cmd))
-      return $cmd[$m[1]]($argline);
-    elseif (method_exists(get_called_class(), $m[1]))
-      return self::$m[1]($argline);
+    $ret = NULL;
 
-    throw new RuntimeException("No such console command: '{$m[1]}'");
+    if (array_key_exists($m[1], $cmd))
+      $ret = $cmd[$m[1]]($argline);
+    elseif (method_exists(get_called_class(), $m[1]))
+      $ret = self::$m[1]($argline);
+    else
+      throw new RuntimeException("No such console command: '{$m[1]}'");
+
+    if (! strlen(trim($ret))) {
+      Console::$printnext = false;
+      return "Wigwam\\Console\\Console::\$result";
+    } else {
+      return $ret;
+    }
   }
 
   public static function pp() {

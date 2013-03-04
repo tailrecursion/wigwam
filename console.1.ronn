@@ -76,6 +76,10 @@ History expansion is pretty standard. `$$` is the previous expression. `$0`,
 index, like `$-4` for example, refers to the 4th previous expression. Note
 that `$$` and `$-1` are equivalent.
 
+Additionally, the previous result is accessible via `$!`. This is expanded
+to the result of the last evaluation---the previous expression is not evaluated
+again.
+
 ## PROGRAMMATIC REPL ACCESS
 
 Most of the REPL functionality can be modified or accessed programmatically

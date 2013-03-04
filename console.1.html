@@ -135,6 +135,10 @@ is provided, the current pager command is removed.</dd>
 index, like <code>$-4</code> for example, refers to the 4th previous expression. Note
 that <code>$$</code> and <code>$-1</code> are equivalent.</p>
 
+<p>Additionally, the previous result is accessible via <code>$!</code>. This is expanded
+to the result of the last evaluation---the previous expression is not evaluated
+again.</p>
+
 <h2 id="PROGRAMMATIC-REPL-ACCESS">PROGRAMMATIC REPL ACCESS</h2>
 
 <p>Most of the REPL functionality can be modified or accessed programmatically

@@ -107,6 +107,9 @@ Evaluate \fIexpr\fR and examine result (print full \fBvar_export\fR output)\.
 .SH "HISTORY EXPANSION"
 History expansion is pretty standard\. \fB$$\fR is the previous expression\. \fB$0\fR, \fB$1\fR, \fB$2\fR, \.\.\. expand to expression number 0, 1, 2, etc\. Using a negative index, like \fB$\-4\fR for example, refers to the 4th previous expression\. Note that \fB$$\fR and \fB$\-1\fR are equivalent\.
 .
+.P
+Additionally, the previous result is accessible via \fB$!\fR\. This is expanded to the result of the last evaluation\-\-\-the previous expression is not evaluated again\.
+.
 .SH "PROGRAMMATIC REPL ACCESS"
 Most of the REPL functionality can be modified or accessed programmatically via the \fBConsole\fR and \fBConsoleCommand\fR classes\.
 .
