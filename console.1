@@ -4,13 +4,13 @@
 .TH "CONSOLE" "1" "March 2013" "" ""
 .
 .SH "NAME"
-\fBconsole\fR \- A Read\-Eval\-Print\-Loop (REPL) for the PHP language\.
+\fBconsole\fR \- A Read\-Eval\-Print Loop (REPL) for the PHP language\.
 .
 .SH "SYNOPSIS"
 \fBconsole\fR [\fB\-hHqz\fR] [\fB\-c\fR \fIcolor\fR] [\fB\-f\fR \fIfile\fR] [\fB\-i\fR \fIkey=val\fR] [\fB\-p\fR \fIfile\fR] [\fB\-s\fR \fIfile\fR] [\fB\-v\fR \fIvar=val\fR]
 .
 .SH "DESCRIPTION"
-\fBConsole\fR provides a REPL environment for the PHP language\.
+\fBConsole\fR provides a Read\-Eval\-Print Loop (REPL) environment for the PHP language\. A REPL is an interactive programming environment\. The user enters PHP statements and expressions which are read, evaluated, and the results printed\. The REPL environment is protected from errors and exceptions, including PHP fatal and parse errors\.
 .
 .SH "OPTIONS"
 .
@@ -61,7 +61,7 @@ Run script files but don\'t start interactive REPL\.
 .P
 Multiple \fB\-f\fR, \fB\-i\fR, \fB\-p\fR, and \fB\-v\fR options may be specified on the same command line\.
 .
-.SH "THE REPL ENVIRONMENT"
+.SH "REPL COMMANDS"
 The following commands are available inside the REPL environment:
 .
 .TP
@@ -105,12 +105,25 @@ Evaluate \fIexpr\fR but don\'t display the result\.
 Evaluate \fIexpr\fR and examine result (print full \fBvar_export\fR output)\.
 .
 .SH "HISTORY EXPANSION"
-History expansion is pretty standard\. \fB$$\fR is the previous expression\. \fB$0\fR, \fB$1\fR, \fB$2\fR, \.\.\. expand to expression number 0, 1, 2, etc\. Using a negative index, like \fB$\-4\fR for example, refers to the 4th previous expression\. Note that \fB$$\fR and \fB$\-1\fR are equivalent\.
+Each statement and expression entered into the REPL is assigned a history number\. Expressions and statements previously entered can be referenced by this number at read\-time via history expansion\. The following special forms are expanded:
 .
-.P
-Additionally, the previous result is accessible via \fB$!\fR\. This is expanded to the result of the last evaluation\-\-\-the previous expression is not evaluated again\.
+.TP
+\fB$$\fR
+Expands to the previous statement/expression\.
 .
-.SH "PROGRAMMATIC REPL ACCESS"
+.TP
+\fB$\fR\fIN\fR
+Expands to the statement/expression corresponding to history number \fIN\fR\.
+.
+.TP
+\fB$\fR\fI\-N\fR
+Expands to the \fIN\fRth previous statement/expression\. (Note that \fB$$\fR is equivalent to \fB$\-1\fR, for example\.)
+.
+.TP
+\fB$!\fR
+Expands to the previous result\. (The previous statement or expression is not re\-evaluated\.)
+.
+.SH "CONFIGURATION"
 Most of the REPL functionality can be modified or accessed programmatically via the \fBConsole\fR and \fBConsoleCommand\fR classes\.
 .
 .TP

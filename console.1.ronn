@@ -1,4 +1,4 @@
-console(1) -- A Read-Eval-Print-Loop (REPL) for the PHP language.
+console(1) -- A Read-Eval-Print Loop (REPL) for the PHP language.
 =================================================================
 
 ## SYNOPSIS
@@ -8,7 +8,11 @@ console(1) -- A Read-Eval-Print-Loop (REPL) for the PHP language.
 
 ## DESCRIPTION
 
-**Console** provides a REPL environment for the PHP language.
+**Console** provides a Read-Eval-Print Loop (REPL) environment for the PHP
+language. A REPL is an interactive programming environment. The user enters
+PHP statements and expressions which are read, evaluated, and the results
+printed. The REPL environment is protected from errors and exceptions,
+including PHP fatal and parse errors.
 
 ## OPTIONS
 
@@ -42,7 +46,7 @@ console(1) -- A Read-Eval-Print-Loop (REPL) for the PHP language.
   Multiple `-f`, `-i`, `-p`, and `-v` options may be specified on the same
   command line.
 
-## THE REPL ENVIRONMENT
+## REPL COMMANDS
 
 The following commands are available inside the REPL environment:
 
@@ -71,16 +75,23 @@ The following commands are available inside the REPL environment:
 
 ## HISTORY EXPANSION
 
-History expansion is pretty standard. `$$` is the previous expression. `$0`,
-`$1`, `$2`, ... expand to expression number 0, 1, 2, etc. Using a negative
-index, like `$-4` for example, refers to the 4th previous expression. Note
-that `$$` and `$-1` are equivalent.
+Each statement and expression entered into the REPL is assigned a history
+number. Expressions and statements previously entered can be referenced by
+this number at read-time via history expansion. The following special forms
+are expanded:
 
-Additionally, the previous result is accessible via `$!`. This is expanded
-to the result of the last evaluation---the previous expression is not evaluated
-again.
+  * `$$`:
+    Expands to the previous statement/expression.
+  * `$`<N>:
+    Expands to the statement/expression corresponding to history number <N>.
+  * `$`<-N>:
+    Expands to the <N>th previous statement/expression. (Note that `$$` is
+    equivalent to `$-1`, for example.)
+  * `$!`:
+    Expands to the previous result. (The previous statement or expression is
+    not re-evaluated.)
 
-## PROGRAMMATIC REPL ACCESS
+## CONFIGURATION
 
 Most of the REPL functionality can be modified or accessed programmatically
 via the `Console` and `ConsoleCommand` classes.
