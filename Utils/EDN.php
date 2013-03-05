@@ -18,7 +18,7 @@ class EDN {
   }
 
   public static function date_to_edn($d) {
-    return sprintf('#inst %s', $d->format($d::RFC3339));
+    return sprintf('#inst "%s"', $d->format($d::RFC3339));
   }
 
   public static function to_edn($o) {
