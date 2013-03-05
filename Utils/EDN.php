@@ -1,8 +1,5 @@
 <?php namespace Wigwam\Utils;
 
-use Wigwam\Utils\ArrayUtils;
-use InvalidArgumentException;
-
 class EDN {
 
   public static function map_to_edn($m) {
@@ -33,8 +30,7 @@ class EDN {
       case 'DateTime':
         return EDN::date_to_edn($o);
       default:
-        $exMsg = sprintf("EDN: Don't know how to print class %s", get_class($o));
-        throw new InvalidArgumentException($exMsg);
+        return EDN::to_edn((array)$o);
       }
     } else {
       /* Strings and primitives */
