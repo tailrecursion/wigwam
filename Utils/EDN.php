@@ -36,6 +36,8 @@ class EDN {
       /* Strings and primitives */
       if (is_string($o)) {
         return sprintf('"%s"', $o);
+      } elseif (is_null($o)) {
+        return 'nil';
       } else {
         return ((string)$o);
       }
