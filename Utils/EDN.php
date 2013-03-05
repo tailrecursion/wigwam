@@ -38,6 +38,8 @@ class EDN {
         return sprintf('"%s"', $o);
       } elseif (is_null($o)) {
         return 'nil';
+      } elseif (is_bool($o)) {
+        return $o ? 'true' : 'false';
       } else {
         return ((string)$o);
       }
