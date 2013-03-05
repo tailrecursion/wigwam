@@ -598,7 +598,7 @@ EOT;
           pcntl_wait($status);
           return;
         } elseif (! $pid) {
-          $cmd = sprintf("cat %s |%s", escapeshellarg($scratch), static::$PAGER);
+          $cmd = sprintf("cat %s 2>&- |%s", escapeshellarg($scratch), static::$PAGER);
           pcntl_exec(static::$SH, array("-c", $cmd));
         } else {
           $ex = new \Exception("Can't fork.");
