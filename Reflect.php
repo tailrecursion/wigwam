@@ -37,25 +37,27 @@ class Reflect {
   public function getApi() {
     $app    = new ReflectionClass($this->name);
     $xthis  = $this;
+    $clname = get_class($this->name);
 
     return $this->api ? $this->api : $this->api = array(
       'name'      => $app->getName(),
-      'methods'   => array_filter(array_values(array_map(function($method) use ($xthis) {
-        return $method->isPublic()
-          ? $xthis->runParseHandlers(array(
-              'name'      => $method->getName(),
-              'tags'      => $xthis->parseDoc((string) $method->getDocComment()),
-              'params'    => array_map(function($param) {
-                $tmp = array(
-                  'name'      => $param->name,
-                  'optional'  => $param->isOptional()
-                );
-                if ($param->isDefaultValueAvailable())
-                  $tmp['default'] = $param->getDefaultValue();
-                return $tmp;
-              }, $method->getParameters())
-            ))
-          : false;
+      'methods'   => array_filter(array_values(array_map(function($method) use ($xthis, $clname) {
+        if ($method->getDeclaringClass()->name == $clname)
+          return $method->isPublic()
+            ? $xthis->runParseHandlers(array(
+                'name'      => $method->getName(),
+                'tags'      => $xthis->parseDoc((string) $method->getDocComment()),
+                'params'    => array_map(function($param) {
+                  $tmp = array(
+                    'name'      => $param->name,
+                    'optional'  => $param->isOptional()
+                  );
+                  if ($param->isDefaultValueAvailable())
+                    $tmp['default'] = $param->getDefaultValue();
+                  return $tmp;
+                }, $method->getParameters())
+              ))
+            : false;
       }, $app->getMethods(ReflectionMethod::IS_STATIC))))
     );
   }
