@@ -27,6 +27,8 @@ class EDN {
     } elseif (is_object($o)) {
       /* Arbitrary objects */
       switch (get_class($o)) {
+      case 'stdClass':
+        return EDN::map_to_edn($o);
       case 'DateTime':
         return EDN::date_to_edn($o);
       default:
@@ -35,7 +37,7 @@ class EDN {
     } else {
       /* Strings and primitives */
       if (is_string($o)) {
-        return sprintf('"%s"', $o);
+        return sprintf((strpos($o, ':') === 0 ? "%s" : '"%s"'), $o);
       } elseif (is_null($o)) {
         return 'nil';
       } elseif (is_bool($o)) {
