@@ -164,6 +164,7 @@ function getExceptionDefs() {
     data: {},
 
     csrfToken: 0,
+    badCSRFCount: 0,
 
     cfg: getConf(),
 
@@ -210,7 +211,7 @@ function getExceptionDefs() {
             e     = Wigwam.ServerException;
           }
           e = e ? new e(body) : new Error(err);
-          if (e instanceof Wigwam.BadCSRFToken) {
+          if (e instanceof Wigwam.BadCSRFToken && ++Wigwam.badCSRFCount < 2) {
             Wigwam.csrfToken = body.token;          
             Wigwam.ajax.apply(window, argv);
           } else if ($.isFunction(errcallback)) {
